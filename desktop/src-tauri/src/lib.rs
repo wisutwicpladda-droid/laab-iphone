@@ -42,6 +42,30 @@ use tauri::{Emitter, Manager, RunEvent, WindowEvent};
 
 use crate::state::AppState;
 
+/// iPhone: let the page fill the screen. UIKit otherwise insets the web
+/// view's scroll view by the status bar and home indicator, and the page
+/// ended that far above the bottom of the screen, over a blank band. The
+/// page keeps clear of them itself with `env(safe-area-inset-*)`.
+#[cfg(target_os = "ios")]
+fn edge_to_edge(window: &tauri::WebviewWindow) {
+    let _ = window.with_webview(|webview| {
+        use objc2::msg_send;
+        use objc2::runtime::AnyObject;
+        let view = webview.inner() as *mut AnyObject;
+        if view.is_null() {
+            return;
+        }
+        // SAFETY: `view` is the live WKWebView, on the main thread here.
+        unsafe {
+            let scroll: *mut AnyObject = msg_send![view, scrollView];
+            if !scroll.is_null() {
+                // UIScrollViewContentInsetAdjustmentNever
+                let _: () = msg_send![scroll, setContentInsetAdjustmentBehavior: 2isize];
+            }
+        }
+    });
+}
+
 /// `laab://chat/<chatId>?message=<messageId>` (used by the Raycast extension).
 fn open_deep_link(app: &tauri::AppHandle, url: &str) {
     let Ok(u) = url::Url::parse(url) else { return };
@@ -198,6 +222,8 @@ pub fn run() {
             notify::setup(&app.config().identifier);
             if let Some(w) = app.get_webview_window("main") {
                 traffic_lights::place(&w.as_ref().window());
+                #[cfg(target_os = "ios")]
+                edge_to_edge(&w);
             }
 
             if demo {

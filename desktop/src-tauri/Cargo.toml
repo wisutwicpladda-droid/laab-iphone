@@ -66,5 +66,6 @@ tauri-plugin-process = "2"
 
 [target.'cfg(target_os = "ios")'.dependencies]
 security-framework = "3"
+objc2 = "0.6"
 # SQLCipher needs a target-built crypto library, not Homebrew's macOS OpenSSL.
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
