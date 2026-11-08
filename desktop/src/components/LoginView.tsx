@@ -7,6 +7,12 @@ import { notice } from "../lib/ui";
 import { BubbleIcon } from "./Icons";
 import { Spinner } from "./kit";
 
+/** Which LINE desktop session a login replaces. The iPhone build signs in
+ *  as LINE for Mac; the desktop build's password login as LINE for Windows. */
+const DEVICE_NOTE = isIOS
+  ? "เข้าสู่ระบบแบบ LINE for Mac: LINE บน Windows ยังใช้งานต่อได้ แต่ถ้าล็อกอิน LINE for Mac ไว้ที่เครื่องอื่น เครื่องนั้นจะถูกออกจากระบบ"
+  : "ใช้แบบ LINE for Windows จะทำให้ LINE บน Windows ที่ล็อกอินอยู่ถูกออกจากระบบ (LINE for Mac ไม่กระทบ)";
+
 /** Email or phone number and password. LINE asks the phone to confirm with
  *  a PIN, shown below like the QR flow's. */
 function PasswordLogin({ busy }: { busy: boolean }) {
@@ -55,7 +61,7 @@ function PasswordLogin({ busy }: { busy: boolean }) {
         เข้าสู่ระบบ
       </button>
       <p className="max-w-64 text-center text-[11px] leading-relaxed text-secondary">
-        ใช้แบบ LINE for Windows จะทำให้ LINE บน Windows ที่ล็อกอินอยู่ถูกออกจากระบบ (LINE for Mac ไม่กระทบ)
+        {DEVICE_NOTE}
       </p>
     </form>
   );
@@ -97,6 +103,7 @@ export function LoginView() {
             <img src={qr} width={220} height={220} alt="QR" />
           </div>
           <p className="text-[13px] text-secondary">{isIOS ? "แสดง QR นี้บนอีกหน้าจอ แล้วใช้ LINE สแกน" : "เปิด LINE บนโทรศัพท์ แล้วสแกน QR นี้"}</p>
+          {isIOS && <p className="max-w-64 text-[11px] leading-relaxed text-secondary">{DEVICE_NOTE}</p>}
         </motion.div>
       )}
       {s?.pin && (

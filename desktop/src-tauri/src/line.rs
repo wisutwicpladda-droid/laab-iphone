@@ -27,6 +27,28 @@ use crate::state::{AppState, now_ms};
 
 /// The device the Deno sidecar used. It does not log out LINE for Mac.
 pub const DEFAULT_DEVICE: Device = Device::AndroidSecondary;
+
+/// The device new logins use. On the desktop, QR login keeps the Android
+/// secondary device and password login uses LINE for Windows, so a Mac
+/// running LINE for Mac is not signed out. On iPhone every login is LINE for
+/// Mac, so LINE for Windows on the user's PC stays signed in.
+#[cfg(desktop)]
+const QR_DEVICE: Device = DEFAULT_DEVICE;
+#[cfg(desktop)]
+const PASSWORD_DEVICE: Device = Device::DesktopWin;
+#[cfg(mobile)]
+const QR_DEVICE: Device = Device::DesktopMac;
+#[cfg(mobile)]
+const PASSWORD_DEVICE: Device = Device::DesktopMac;
+
+/// Login options for a new session. On iPhone the device is named like a
+/// Mac in LINE's device list, matching the LINE for Mac device type.
+fn login_options(device: Device, storage: SessionStorage) -> InitOptions {
+    let options = InitOptions::new(device).storage(storage);
+    #[cfg(mobile)]
+    let options = options.device_name("Mac");
+    options
+}
 const HISTORY_LIMIT: i32 = 100;
 
 pub struct Line {
@@ -204,6 +226,17 @@ pub async fn start(state: Arc<AppState>) {
     let device: Device = device
         .and_then(|d| d.parse().ok())
         .unwrap_or(DEFAULT_DEVICE);
+    // A session saved by an older iPhone build logged in as LINE for Windows.
+    // Drop it so the next login is LINE for Mac and the PC stays signed in.
+    #[cfg(mobile)]
+    if device == Device::DesktopWin {
+        clear_auth(&state);
+        state.update_session(|s| {
+            s.state = "signed_out".into();
+            s.status = "แอปเปลี่ยนเป็นเข้าสู่ระบบแบบ LINE for Mac แล้ว กรุณาเข้าสู่ระบบอีกครั้ง".into();
+        });
+        return;
+    }
     state.update_session(|s| {
         s.state = "logging_in".into();
         s.status = "กำลังเชื่อม LINE…".into();
@@ -245,7 +278,7 @@ pub async fn login_qr(state: Arc<AppState>) -> Result<()> {
     });
     let (a, b) = (state.clone(), state.clone());
     let result = login_with_qr(
-        InitOptions::new(DEFAULT_DEVICE).storage(storage),
+        login_options(QR_DEVICE, storage),
         move |url| {
             a.update_session(|s| {
                 s.qr_url = Some(url);
@@ -263,7 +296,7 @@ pub async fn login_qr(state: Arc<AppState>) -> Result<()> {
     .await;
     match result {
         Ok(client) => {
-            connected(state.clone(), client, DEFAULT_DEVICE).await;
+            connected(state.clone(), client, QR_DEVICE).await;
             analytics::send(&state, analytics::Event::SignedIn(analytics::Login::Qr));
             Ok(())
         }
@@ -281,9 +314,10 @@ pub async fn login_qr(state: Arc<AppState>) -> Result<()> {
 }
 
 /// Email or phone number (e.g. `+66812345678`) and password. LINE asks the
-/// phone to confirm with a PIN, shown like the QR flow's. Password login
-/// uses the Windows desktop device, as laab-gpui does; it signs out LINE for
-/// Windows, not LINE for Mac.
+/// phone to confirm with a PIN, shown like the QR flow's. On the desktop,
+/// password login uses the Windows device, as laab-gpui does; it signs out
+/// LINE for Windows, not LINE for Mac. On iPhone it uses the Mac device, so
+/// it signs out LINE for Mac, not LINE for Windows.
 pub async fn login_password(
     state: Arc<AppState>,
     identifier: String,
@@ -298,7 +332,7 @@ pub async fn login_password(
     });
     let pin = state.clone();
     let result = line_rs::client::login_with_password(
-        InitOptions::new(Device::DesktopWin).storage(storage),
+        login_options(PASSWORD_DEVICE, storage),
         identifier.trim(),
         &password,
         None,
@@ -312,7 +346,7 @@ pub async fn login_password(
     .await;
     match result {
         Ok(client) => {
-            connected(state.clone(), client, Device::DesktopWin).await;
+            connected(state.clone(), client, PASSWORD_DEVICE).await;
             analytics::send(&state, analytics::Event::SignedIn(analytics::Login::Password));
             Ok(())
         }
