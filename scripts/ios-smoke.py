@@ -57,6 +57,16 @@ with (out / 'console.log').open('w') as log:
             run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-iphone-dark.png').resolve(), timeout=60)
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
             (out / 'dark-screenshot-error.txt').write_text(type(error).__name__)
+        # The chat list too, in dark then light mode.
+        try:
+            run('xcrun', 'simctl', 'openurl', udid, 'laab://home', timeout=30)
+            time.sleep(4)
+            run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-list-dark.png').resolve(), timeout=60)
+            run('xcrun', 'simctl', 'ui', udid, 'appearance', 'light', timeout=30)
+            time.sleep(4)
+            run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-list-light.png').resolve(), timeout=60)
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+            (out / 'list-screenshot-error.txt').write_text(type(error).__name__)
         try:
             data = Path(run('xcrun', 'simctl', 'get_app_container', udid, identifier, 'data', timeout=30).strip())
             for p in data.rglob('laab*.log'):

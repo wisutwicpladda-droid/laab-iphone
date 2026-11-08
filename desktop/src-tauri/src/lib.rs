@@ -66,9 +66,14 @@ fn edge_to_edge(window: &tauri::WebviewWindow) {
     });
 }
 
-/// `laab://chat/<chatId>?message=<messageId>` (used by the Raycast extension).
+/// `laab://chat/<chatId>?message=<messageId>` (used by the Raycast extension),
+/// and `laab://home`, the chat list (the iPhone back to the list).
 fn open_deep_link(app: &tauri::AppHandle, url: &str) {
     let Ok(u) = url::Url::parse(url) else { return };
+    if u.scheme() == "laab" && u.host_str() == Some("home") {
+        let _ = app.emit("mobile-route", "/");
+        return;
+    }
     if u.scheme() != "laab" || u.host_str() != Some("chat") {
         return;
     }
