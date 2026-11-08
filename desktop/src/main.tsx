@@ -42,6 +42,15 @@ function App() {
     };
   }, []);
   const auxiliary = isIOS && hash !== "" && hash !== "#/" && !hash.startsWith("#/chat/");
+  // The photo/file page is light and the viewer black whatever the theme;
+  // the status bar area follows them.
+  const tone = hash.startsWith("#/media/") ? "aux-light" : hash.startsWith("#/viewer") ? "aux-dark" : "";
+  useEffect(() => {
+    if (!isIOS) return;
+    const html = document.documentElement;
+    html.classList.toggle("aux-light-page", auxiliary && tone === "aux-light");
+    html.classList.toggle("aux-dark-page", auxiliary && tone === "aux-dark");
+  }, [auxiliary, tone]);
   // Pages opened over the chat (calendar, albums…) also go back with a swipe
   // from the left edge.
   const swipeRoot = useRef<HTMLDivElement>(null);
@@ -50,9 +59,14 @@ function App() {
     return h === "" || h === "#/" || h.startsWith("#/chat/");
   });
   return <div ref={swipeRoot} className="relative h-full overflow-hidden">
-    <div className={auxiliary ? `aux-page h-full bg-list ${hash.startsWith("#/media/") ? "aux-light" : ""}` : "h-full"}>
-      {auxiliary && <button className="mobile-back" onClick={() => history.back()}>‹ ย้อนกลับ</button>}
-      <div style={auxiliary ? { height: "calc(100% - 44px)" } : { height: "100%" }}><RouterProvider router={router} /></div>
+    <div className={auxiliary ? `aux-page relative h-full bg-list ${tone}` : "h-full"}>
+      {/* LINE for iPhone: ‹ at the top left, level with the page's title. */}
+      {auxiliary && (
+        <button className="mobile-back" aria-label="ย้อนกลับ" onClick={() => history.back()}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
+      )}
+      <div style={{ height: "100%" }}><RouterProvider router={router} /></div>
     </div>
   </div>;
 }
