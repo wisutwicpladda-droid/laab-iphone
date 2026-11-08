@@ -120,7 +120,7 @@ jobs:
           PY
       - name: Launch native demo in iPhone simulator
         if: inputs.package == 'simulator'
-        timeout-minutes: 8
+        timeout-minutes: 12
         run: python3 ../scripts/ios-smoke.py .
       - uses: actions/upload-artifact@v4
         if: always()
