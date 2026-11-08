@@ -19,7 +19,6 @@ import { BubblesIcon, ChevronIcon } from "./Icons";
 import { LiffConsent, SharePicker } from "./LiffDialogs";
 import { AddFriendPage, FriendsPage } from "./ListPages";
 import { MorePage } from "./MorePage";
-import { LayoutProbe } from "./LayoutProbe";
 import { LoginView } from "./LoginView";
 import { Rail } from "./Rail";
 import { ProfileSheet } from "./ProfileSheet";
@@ -196,7 +195,6 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
         )}
       </main>
       <SearchPalette />
-      <LayoutProbe />
       <ConfirmDialog />
       <Sheets />
       <FolderDialog />
