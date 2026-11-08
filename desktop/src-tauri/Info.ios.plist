@@ -5,4 +5,9 @@
   <key>NSPhotoLibraryAddUsageDescription</key><string>บันทึกรูปภาพจากแชท</string>
   <key>NSCameraUsageDescription</key><string>ถ่ายรูปเพื่อส่งในแชท</string>
   <key>NSMicrophoneUsageDescription</key><string>อัดข้อความเสียงเพื่อส่งในแชท</string>
+  <key>CFBundleURLTypes</key>
+  <array><dict>
+    <key>CFBundleURLName</key><string>tech.softnetics.laab</string>
+    <key>CFBundleURLSchemes</key><array><string>laab</string></array>
+  </dict></array>
 </dict></plist>
