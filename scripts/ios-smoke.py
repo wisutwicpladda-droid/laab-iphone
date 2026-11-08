@@ -30,6 +30,17 @@ udid = phone['udid']
 if phone['state'] != 'Booted':
     run('xcrun', 'simctl', 'boot', udid)
 run('xcrun', 'simctl', 'bootstatus', udid, '-b')
+# Unsigned simulator bundles have no default Keychain access group. Give this
+# isolated simulator app a local ad-hoc identity; physical-device signing must
+# replace these with the user's real provisioning entitlements.
+entitlements = out / 'simulator-entitlements.plist'
+entitlements.write_bytes(plistlib.dumps({
+    'application-identifier': 'SIMULATOR0.' + identifier,
+    'com.apple.developer.team-identifier': 'SIMULATOR0',
+    'keychain-access-groups': ['SIMULATOR0.' + identifier],
+    'get-task-allow': True,
+}))
+run('codesign', '--force', '--sign', '-', '--entitlements', entitlements.resolve(), '--generate-entitlement-der', app)
 run('xcrun', 'simctl', 'install', udid, app)
 env = dict(os.environ, SIMCTL_CHILD_RUST_BACKTRACE='1', SIMCTL_CHILD_RUST_LOG='laab_lib=debug,line_rs=warn')
 with (out / 'console.log').open('w') as log:
