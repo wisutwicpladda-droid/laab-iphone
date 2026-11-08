@@ -5,7 +5,8 @@ import { listen } from "@tauri-apps/api/event";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api, errorText, useChatList, useLoginPage, useSession } from "../lib/api";
 import { adjacentChat } from "../lib/chatList";
-import { openChat } from "../lib/nav";
+import { closeChat, openChat } from "../lib/nav";
+import { useSwipeBack } from "../lib/swipeBack";
 import { LAST_CHAT_KEY, notice, setUi, ui, useUi } from "../lib/ui";
 import { foldChat, foldIfNarrow, unfoldChat } from "../lib/fold";
 import { askAboutAnalytics } from "../lib/analytics";
@@ -34,6 +35,15 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
   const frame = useUi((s) => s.foldFrame);
   const page = useUi((s) => s.railPage);
   const segment = useUi((s) => s.chatsSegment);
+  // iPhone: swipe from the left edge (or ‹) slides the chat away to the list.
+  const layoutRef = useRef<HTMLDivElement>(null);
+  useSwipeBack(
+    isIOS && !!chatId,
+    layoutRef,
+    { front: ".laab-conversation", under: [".laab-chat-list", "[data-rail]"] },
+    closeChat,
+    () => !layoutRef.current?.classList.contains("has-chat"),
+  );
   const savedWidth = useUi((s) => s.listWidth);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   // While the window slides open or shut, every animation frame is a resize;
@@ -127,7 +137,7 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
     );
   }
   return (
-    <div className={`laab-layout flex h-full overflow-hidden ${chatId ? "has-chat" : ""}`}>
+    <div ref={layoutRef} className={`laab-layout flex h-full overflow-hidden ${chatId ? "has-chat" : ""}`}>
       <Rail />
       <div className="w-px bg-separator" />
       {/* No width animation: it reflowed the timeline every frame and made

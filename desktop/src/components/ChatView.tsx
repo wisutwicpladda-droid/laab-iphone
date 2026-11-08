@@ -11,6 +11,7 @@ import { api, errorText, messageLimit, q, queryClient, setMessageLimit, useChatL
 import { adjacentChat, isGroup, isKeepMemo } from "../lib/chatList";
 import { findHits } from "../lib/inChatSearch";
 import { closeChat, openChat } from "../lib/nav";
+import { animatedBack } from "../lib/swipeBack";
 import { dismissTop, notice, ui, useUi } from "../lib/ui";
 import { Announcements } from "./Announcements";
 import { HeaderMenu } from "./ChatActions";
@@ -242,7 +243,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
       <div className="desktop-title-space drag h-[56px] shrink-0" data-tauri-drag-region />
       {isIOS && (
         <header className="grid h-[50px] shrink-0 grid-cols-[minmax(84px,auto)_1fr_minmax(84px,auto)] items-center border-b border-separator bg-chat px-1">
-          <button onClick={closeChat} aria-label="แชททั้งหมด" className="flex h-11 items-center gap-0.5 pr-2 pl-1 text-primary">
+          <button onClick={animatedBack} aria-label="แชททั้งหมด" className="flex h-11 items-center gap-0.5 pr-2 pl-1 text-primary">
             <ChevronIcon dir="left" size={22} />
             {otherUnread > 0 && <span className="text-[16px]">{otherUnread > 999 ? "999+" : otherUnread}</span>}
           </button>

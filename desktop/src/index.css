@@ -133,6 +133,17 @@ body,
 .ios .laab-conversation { display: none; min-height: 0; }
 .ios .has-chat > .laab-chat-list, .ios .has-chat > [data-rail] { display: none; }
 .ios .has-chat > .laab-conversation { display: flex; flex-direction: column; }
+/* The back swipe: the list (and tab bar) show under the chat while it moves.
+   Opening a chat slides it in from the right. */
+.ios .has-chat.swiping > .laab-chat-list { display: block; position: absolute; inset: 0; z-index: 0; }
+.ios .has-chat.swiping > [data-rail] { display: flex; }
+.ios .has-chat.swiping > .laab-conversation {
+  position: absolute; inset: 0; z-index: 40; background: var(--color-chat);
+  box-shadow: -10px 0 28px rgba(0, 0, 0, 0.35);
+}
+.ios .has-chat > .laab-conversation { animation: ios-push 300ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes ios-push { from { transform: translate3d(100%, 0, 0); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ios .has-chat > .laab-conversation { animation: none; } }
 .ios .laab-conversation > .relative { flex: 1; min-height: 0; height: auto; }
 .ios .desktop-title-space, .ios .desktop-send-hint { display: none; }
 .ios input, .ios textarea, .ios .composer-mirror { font-size: 16px !important; }

@@ -2,7 +2,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { HotkeysProvider } from "@tanstack/react-hotkeys";
 import { RouterProvider } from "@tanstack/react-router";
 import { MotionConfig } from "motion/react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useSwipeBack } from "./lib/swipeBack";
 import { listen } from "@tauri-apps/api/event";
 import { isIOS } from "./lib/platform";
 import ReactDOM from "react-dom/client";
@@ -36,10 +37,19 @@ function App() {
     };
   }, []);
   const auxiliary = isIOS && hash !== "" && hash !== "#/" && !hash.startsWith("#/chat/");
-  return <>
-    {auxiliary && <button className="mobile-back" onClick={() => history.back()}>‹ ย้อนกลับ</button>}
-    <div style={auxiliary ? { height: "calc(100% - 44px)" } : { height: "100%" }}><RouterProvider router={router} /></div>
-  </>;
+  // Pages opened over the chat (calendar, albums…) also go back with a swipe
+  // from the left edge.
+  const swipeRoot = useRef<HTMLDivElement>(null);
+  useSwipeBack(auxiliary, swipeRoot, { front: ".aux-page" }, () => history.back(), () => {
+    const h = location.hash;
+    return h === "" || h === "#/" || h.startsWith("#/chat/");
+  });
+  return <div ref={swipeRoot} className="relative h-full overflow-hidden">
+    <div className={auxiliary ? "aux-page h-full bg-list" : "h-full"}>
+      {auxiliary && <button className="mobile-back" onClick={() => history.back()}>‹ ย้อนกลับ</button>}
+      <div style={auxiliary ? { height: "calc(100% - 44px)" } : { height: "100%" }}><RouterProvider router={router} /></div>
+    </div>
+  </div>;
 }
 
 reportUncaughtErrors();
