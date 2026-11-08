@@ -7,6 +7,7 @@ import { Avatar } from "./Avatar";
 import { BlockIcon, BubbleIcon, CloseIcon, PersonPlusIcon, SendIcon, WarningIcon } from "./Icons";
 import { Spinner } from "./kit";
 import { Sheet } from "./Sheet";
+import { isIOS } from "../lib/platform";
 
 /** Someone's profile, like LINE's: the cover behind, picture, name and
  *  status message in the middle, actions at the bottom. People who are not
@@ -69,7 +70,16 @@ export function ProfileSheet({ main }: { main: boolean }) {
   const stranger = !!data && !self && !data.friend && !data.blocked;
 
   return (
-    <Sheet open={!!p} onClose={close} className="h-[min(640px,calc(100vh-48px))] w-[360px] rounded-[18px]! bg-[#2a2a2a]! text-white">
+    <Sheet
+      open={!!p}
+      onClose={close}
+      className={
+        isIOS
+          ? // LINE for iPhone: the profile fills the screen.
+            "ios-profile top-0! left-0! h-full! max-h-none! w-full! max-w-none! translate-x-0! translate-y-0! rounded-none! bg-[#2a2a2a]! text-white ring-0!"
+          : "h-[min(640px,calc(100vh-48px))] w-[360px] rounded-[18px]! bg-[#2a2a2a]! text-white"
+      }
+    >
       {/* The cover, or the profile picture blurred when there is none. A
           gradient keeps the white text readable on any photo. */}
       <div className="absolute inset-0 overflow-hidden">
@@ -87,7 +97,12 @@ export function ProfileSheet({ main }: { main: boolean }) {
         )}
         <div className="absolute inset-0 bg-linear-to-b from-black/25 via-black/15 to-black/60" />
       </div>
-      <button aria-label="ปิด" onClick={close} className="absolute top-4 right-4 z-10 grid h-9 w-9 place-items-center text-white/90 hover:text-white">
+      <button
+        aria-label="ปิด"
+        onClick={close}
+        className={`absolute z-10 grid h-9 w-9 place-items-center text-white/90 hover:text-white ${isIOS ? "left-3" : "right-4"}`}
+        style={{ top: isIOS ? "calc(env(safe-area-inset-top) + 8px)" : 16 }}
+      >
         <CloseIcon size={26} />
       </button>
       <div className="relative flex h-full flex-col">
@@ -105,7 +120,7 @@ export function ProfileSheet({ main }: { main: boolean }) {
             โปรดระวังมิจฉาชีพหลอกลวงผ่าน LINE
           </div>
         )}
-        <div className="flex min-h-[96px] items-start justify-around px-6 pb-7">
+        <div className="flex min-h-[96px] items-start justify-around px-6 pb-7" style={isIOS ? { paddingBottom: "calc(env(safe-area-inset-bottom) + 28px)" } : undefined}>
           {!data && !error && !self && (
             <div className="pt-4 text-white/80">
               <Spinner size={18} />
