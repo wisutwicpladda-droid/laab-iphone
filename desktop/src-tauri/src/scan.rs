@@ -23,6 +23,7 @@ pub async fn scan(app: &AppHandle, parent: Option<&tauri::WebviewWindow>) -> Opt
             SCREEN.into(),
             "ยกเลิก".into(),
         ));
+    #[cfg(desktop)]
     if let Some(w) = parent {
         dialog = dialog.parent(w);
     }

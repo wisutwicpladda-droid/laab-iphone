@@ -39,6 +39,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: desktop/src-tauri
+          cache-on-failure: true
       - name: Install Xcode project generator
         run: brew install xcodegen
       - run: pnpm install --frozen-lockfile
@@ -85,7 +86,7 @@ jobs:
         run: pnpm tauri ios build --ci --target aarch64-sim --no-sign
       - name: Build device IPA for signing with a free Apple ID on Windows
         if: inputs.package == 'unsigned-ipa'
-        run: pnpm tauri ios build --ci --target aarch64 --no-sign
+        run: pnpm tauri ios build --ci --debug --target aarch64 --no-sign
       - name: Build signed device IPA
         if: inputs.package == 'signed-ipa'
         env:

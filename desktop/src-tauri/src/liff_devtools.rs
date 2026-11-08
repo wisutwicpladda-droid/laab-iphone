@@ -249,6 +249,7 @@ pub fn session(label: &str) -> Option<Session> {
 /// window in it.
 pub fn open(app: &AppHandle, focus: Option<&str>) -> tauri::Result<()> {
     if let Some(w) = app.get_webview_window(WINDOW) {
+        #[cfg(desktop)]
         let _ = w.unminimize();
         w.set_focus()?;
     } else {
