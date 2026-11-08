@@ -51,4 +51,4 @@ export function Sheet({
 }
 
 export const buttonClass = (primary = false) =>
-  `h-8 rounded-md px-4 text-[13px] font-medium ${primary ? "bg-line-green text-white disabled:opacity-50" : "bg-field text-primary"}`;
+  `${isIOS ? "h-11 rounded-xl px-5 text-[16px] font-semibold" : "h-8 rounded-md px-4 text-[13px] font-medium"} ${primary ? "bg-line-green text-white disabled:opacity-50" : "bg-field text-primary"}`;
