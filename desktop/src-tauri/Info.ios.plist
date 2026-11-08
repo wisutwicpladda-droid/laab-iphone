@@ -3,4 +3,5 @@
 <plist version="1.0"><dict>
   <key>NSPhotoLibraryUsageDescription</key><string>เลือกรูปภาพเพื่อส่งในแชท</string>
   <key>NSPhotoLibraryAddUsageDescription</key><string>บันทึกรูปภาพจากแชท</string>
+  <key>NSCameraUsageDescription</key><string>ถ่ายรูปเพื่อส่งในแชท</string>
 </dict></plist>

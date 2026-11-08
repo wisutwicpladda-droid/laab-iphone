@@ -19,11 +19,32 @@ import {
 import type { ChatMember, DraftMention } from "../lib/types";
 import { pushDismiss, setUi, useUi } from "../lib/ui";
 import { Avatar } from "./Avatar";
-import { CloseIcon, PaperclipIcon, PlusIcon, SendIcon, SmileIcon, WarningIcon } from "./Icons";
+import { CameraOutlineIcon, ChevronIcon, CloseIcon, ImageOutlineIcon, PaperclipIcon, PlusIcon, SendIcon, SmileIcon, WarningIcon } from "./Icons";
 
 const LINE_HEIGHT = 20;
 const MAX_LINES = 6;
 const kbd = "rounded border border-separator px-1 py-px font-sans text-[10.5px] text-secondary";
+
+/** A photo from the iPhone's photo picker or camera, as bytes LINE takes.
+ *  JPEG, PNG and GIF go as they are; anything else (such as HEIC) is drawn
+ *  again as a JPEG, at most 4096 px on the long side. */
+async function photoBytes(file: File): Promise<{ bytes: Uint8Array; name: string }> {
+  const stem = file.name.replace(/\.[^.]+$/, "") || "photo";
+  if (/^image\/(jpeg|png|gif)$/.test(file.type)) {
+    return { bytes: new Uint8Array(await file.arrayBuffer()), name: file.name || `${stem}.jpg` };
+  }
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 4096 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise<Blob>((ok, fail) =>
+    canvas.toBlob((b) => (b ? ok(b) : fail(new Error("แปลงรูปไม่สำเร็จ"))), "image/jpeg", 0.9),
+  );
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), name: `${stem}.jpg` };
+}
 
 export interface ComposerHandle {
   focus: () => void;
@@ -53,7 +74,15 @@ export const Composer = forwardRef<
 >(function Composer({ chatId, group, disabled, members, loadMembers, stickerOpen, onToggleStickers, name, picture, onStep }, ref) {
   const area = useRef<HTMLTextAreaElement>(null);
   const mirror = useRef<HTMLDivElement>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
+  // iPhone: while typing, +, camera and photo fold into "›", as in LINE.
+  const [toolsOpen, setToolsOpen] = useState(false);
+  useEffect(() => {
+    if (!text) setToolsOpen(false);
+  }, [text]);
+  const showTools = !text || toolsOpen;
   const [mentions, setMentions] = useState<DraftMention[]>([]);
   const [caret, setCaret] = useState(0);
   const [pickIndex, setPickIndex] = useState(0);
@@ -267,6 +296,34 @@ export const Composer = forwardRef<
     const paths = Array.isArray(files) ? files : [files];
     sendFiles(paths);
   };
+  // Photos chosen in the iPhone picker or taken with the camera go straight
+  // out, one by one, as in LINE; Retry sends only those that failed.
+  const sendPhotos = async (files: File[]) => {
+    if (!files.length || disabled) return;
+    setSending(true);
+    const failed: { file: File; error: string }[] = [];
+    for (const file of files) {
+      try {
+        const photo = await photoBytes(file);
+        await api.sendImageBytes(chatId, photo.bytes, photo.name);
+      } catch (e) {
+        failed.push({ file, error: errorText(e) });
+      }
+    }
+    setSending(false);
+    if (!failed.length) return setFailure(null);
+    setFailure({
+      title: files.length > 1 ? `ส่งแล้ว ${files.length - failed.length} จาก ${files.length} รูป` : "ส่งรูปไม่สำเร็จ",
+      detail: failed.map((f) => f.error).join("\n"),
+      retry: () => void sendPhotos(failed.map((f) => f.file)),
+    });
+  };
+  const onPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    // Cleared so picking the same photo again still fires a change.
+    e.target.value = "";
+    void sendPhotos(files);
+  };
   // Files go one by one and a failure doesn't stop the rest; Retry sends
   // only the ones that failed.
   const sendFiles = (paths: string[]) =>
@@ -478,6 +535,23 @@ export const Composer = forwardRef<
       )}
       <div className={isIOS ? "flex items-end gap-1" : ""}>
         {isIOS && (
+          <>
+            <input ref={photoInput} type="file" accept="image/*" multiple hidden onChange={onPicked} />
+            <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onPicked} />
+          </>
+        )}
+        {isIOS && !showTools && (
+          <button
+            type="button"
+            title="แสดงเมนู"
+            aria-label="แสดงเมนู"
+            onClick={(e) => (e.stopPropagation(), setToolsOpen(true))}
+            className="-ml-1.5 grid h-[38px] w-8 shrink-0 place-items-center text-primary"
+          >
+            <ChevronIcon dir="right" size={22} />
+          </button>
+        )}
+        {isIOS && showTools && (
           <button
             type="button"
             title="แนบไฟล์"
@@ -487,6 +561,30 @@ export const Composer = forwardRef<
             className="-ml-1.5 grid h-[38px] w-9 shrink-0 place-items-center text-primary disabled:opacity-40"
           >
             <PlusIcon size={24} />
+          </button>
+        )}
+        {isIOS && showTools && (
+          <button
+            type="button"
+            title="ถ่ายรูป"
+            aria-label="ถ่ายรูป"
+            disabled={disabled || sending}
+            onClick={(e) => (e.stopPropagation(), cameraInput.current?.click())}
+            className="grid h-[38px] w-9 shrink-0 place-items-center text-primary disabled:opacity-40"
+          >
+            <CameraOutlineIcon size={25} strokeWidth={1.7} />
+          </button>
+        )}
+        {isIOS && showTools && (
+          <button
+            type="button"
+            title="ส่งรูป"
+            aria-label="ส่งรูป"
+            disabled={disabled || sending}
+            onClick={(e) => (e.stopPropagation(), photoInput.current?.click())}
+            className="grid h-[38px] w-9 shrink-0 place-items-center text-primary disabled:opacity-40"
+          >
+            <ImageOutlineIcon size={24} strokeWidth={1.7} />
           </button>
         )}
         <div className={isIOS ? "composer-pill flex min-w-0 flex-1 items-end gap-1 rounded-[19px] bg-field py-[9px] pr-2 pl-3.5" : ""}>

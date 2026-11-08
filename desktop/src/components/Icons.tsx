@@ -228,6 +228,20 @@ export const PlusIcon = (p: P) => (
     <path d="M4 12h16M12 4v16" />
   </svg>
 );
+/** Outline camera and photo, as in LINE for iPhone's message bar. */
+export const CameraOutlineIcon = (p: P) => (
+  <svg {...line(p)}>
+    <path d="M3.5 8.5a2 2 0 0 1 2-2h2.3l1.5-2h5.4l1.5 2h2.3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-9Z" />
+    <circle cx="12" cy="12.8" r="3.6" />
+  </svg>
+);
+export const ImageOutlineIcon = (p: P) => (
+  <svg {...line(p)}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+    <circle cx="9" cy="9.5" r="1.6" />
+    <path d="m4 17.5 4.8-4.8 3.4 3.4 2.8-2.8 5 4.6" />
+  </svg>
+);
 export const FitIcon = (p: P) => (
   <svg {...line(p)}>
     <path d="M4 4l16 16M4 4v6M4 4h6M20 20v-6M20 20h-6" />
