@@ -38,7 +38,7 @@ export function ConfirmDialog() {
   // LINE for Mac: centred title and text, a wide green button, "ปิด" under it.
   return (
     // Focus starts on "ปิด", so a stray Return does not unsend or delete.
-    <Sheet open={!!c} onClose={dismiss} initialFocus={cancel} className="w-[280px] rounded-[12px]! bg-menu!">
+    <Sheet open={!!c} onClose={dismiss} initialFocus={cancel} ios="alert" className="w-[280px] rounded-[12px]! bg-menu!">
       <div className="flex flex-col items-center gap-3 px-6 pt-6 pb-3 text-center">
         <div className="text-[15px] font-bold text-menu-text">{c?.title}</div>
         {c?.body && <p className="text-[12.5px] leading-[1.45] whitespace-pre-line text-secondary">{c.body}</p>}

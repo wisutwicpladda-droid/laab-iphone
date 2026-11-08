@@ -1,5 +1,10 @@
 import { Dialog } from "@base-ui/react/dialog";
 import type { ReactNode, RefObject } from "react";
+import { isIOS } from "../lib/platform";
+
+/** iPhone: a sheet rising from the bottom with rounded top corners. */
+const IOS_SHEET =
+  "ios-sheet top-auto! bottom-[var(--sheet-bottom,0px)]! left-0! w-full! max-w-none! translate-x-0! translate-y-0! rounded-b-none! rounded-t-[16px]! max-h-[calc(var(--app-height,100dvh)-env(safe-area-inset-top)-12px)]! ring-0!";
 
 /** A centred modal on the list background, like a macOS sheet. */
 export function Sheet({
@@ -10,6 +15,7 @@ export function Sheet({
   title,
   initialFocus,
   instant = false,
+  ios = "sheet",
 }: {
   open: boolean;
   onClose: () => void;
@@ -20,6 +26,8 @@ export function Sheet({
   initialFocus?: RefObject<HTMLElement | null>;
   /** No open/close animation, for sheets opened by a keyboard shortcut. */
   instant?: boolean;
+  /** On iPhone: a bottom sheet, a centred alert, or as `className` says. */
+  ios?: "sheet" | "alert" | "none";
 }) {
   const fade = instant ? "" : "transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0";
   const pop = instant
@@ -31,9 +39,10 @@ export function Sheet({
         <Dialog.Backdrop className={`fixed inset-0 z-40 bg-black/25 ${fade}`} />
         <Dialog.Popup
           initialFocus={initialFocus}
-          className={`fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-48px)] max-w-[calc(100vw-48px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-list text-primary shadow-[0_20px_60px_rgba(0,0,0,0.35)] ring-1 ring-black/10 outline-none ${pop} ${className}`}
+          className={`fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-48px)] max-w-[calc(100vw-48px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-list text-primary shadow-[0_20px_60px_rgba(0,0,0,0.35)] ring-1 ring-black/10 outline-none ${isIOS && ios === "sheet" ? "" : pop} ${className} ${isIOS && ios === "sheet" ? IOS_SHEET : ""}`}
         >
-          {title && <Dialog.Title className="px-5 pt-4 text-[15px] font-semibold">{title}</Dialog.Title>}
+          {isIOS && ios === "sheet" && <div aria-hidden className="mx-auto mt-2 h-[5px] w-9 shrink-0 rounded-full bg-secondary/40" />}
+          {title && <Dialog.Title className={isIOS ? "px-5 pt-3 text-center text-[17px] font-bold" : "px-5 pt-4 text-[15px] font-semibold"}>{title}</Dialog.Title>}
           {children}
         </Dialog.Popup>
       </Dialog.Portal>

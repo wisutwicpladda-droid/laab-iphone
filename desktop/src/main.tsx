@@ -24,14 +24,19 @@ function App() {
       document.documentElement.style.setProperty("--app-height", `${height}px`);
       // The keyboard covers the home indicator, so its safe area is not needed.
       document.documentElement.classList.toggle("keyboard", height < window.innerHeight - 120);
+      // Bottom sheets sit on the keyboard, not under it.
+      const under = Math.max(0, window.innerHeight - (viewport?.offsetTop ?? 0) - height);
+      document.documentElement.style.setProperty("--sheet-bottom", `${under}px`);
     };
     resize();
     viewport?.addEventListener("resize", resize);
+    viewport?.addEventListener("scroll", resize);
     const changed = () => setHash(location.hash);
     window.addEventListener("hashchange", changed);
     const off = listen<string>("mobile-route", e => { location.hash = e.payload; });
     return () => {
       viewport?.removeEventListener("resize", resize);
+      viewport?.removeEventListener("scroll", resize);
       window.removeEventListener("hashchange", changed);
       off.then(f => f());
     };
@@ -45,7 +50,7 @@ function App() {
     return h === "" || h === "#/" || h.startsWith("#/chat/");
   });
   return <div ref={swipeRoot} className="relative h-full overflow-hidden">
-    <div className={auxiliary ? "aux-page h-full bg-list" : "h-full"}>
+    <div className={auxiliary ? `aux-page h-full bg-list ${hash.startsWith("#/media/") ? "aux-light" : ""}` : "h-full"}>
       {auxiliary && <button className="mobile-back" onClick={() => history.back()}>‹ ย้อนกลับ</button>}
       <div style={auxiliary ? { height: "calc(100% - 44px)" } : { height: "100%" }}><RouterProvider router={router} /></div>
     </div>

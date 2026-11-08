@@ -73,6 +73,7 @@ export function ProfileSheet({ main }: { main: boolean }) {
     <Sheet
       open={!!p}
       onClose={close}
+      ios="none"
       className={
         isIOS
           ? // LINE for iPhone: the profile fills the screen.
