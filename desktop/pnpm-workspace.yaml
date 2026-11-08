@@ -1,0 +1,4 @@
+# Xcode sanitizes the environment for its Rust build phase. Dependencies are
+# installed explicitly before generating the project; do not reinstall from
+# inside that noninteractive build phase when pnpm rechecks platform settings.
+verifyDepsBeforeRun: false
