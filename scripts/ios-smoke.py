@@ -45,6 +45,13 @@ with (out / 'console.log').open('w') as log:
     (out / 'launch-status.txt').write_text(f'Console process exit status: {result}\n')
     try:
         run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-iphone.png').resolve(), timeout=60)
+        # The same screen in dark mode, as most LINE users see it.
+        try:
+            run('xcrun', 'simctl', 'ui', udid, 'appearance', 'dark', timeout=30)
+            time.sleep(4)
+            run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-iphone-dark.png').resolve(), timeout=60)
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+            (out / 'dark-screenshot-error.txt').write_text(type(error).__name__)
         try:
             data = Path(run('xcrun', 'simctl', 'get_app_container', udid, identifier, 'data', timeout=30).strip())
             for p in data.rglob('laab*.log'):
