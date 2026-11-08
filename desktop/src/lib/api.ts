@@ -211,6 +211,8 @@ export const api = {
   attachmentName: (chatId: string, messageId: string) => invoke<string>("attachment_name", { chatId, messageId }),
   saveAttachment: (chatId: string, messageId: string, dest: string | null = null) =>
     invoke<string>("save_attachment", { chatId, messageId, dest }),
+  /** iPhone: into the Photos library. */
+  saveToPhotos: (chatId: string, messageId: string) => invoke<void>("save_to_photos", { chatId, messageId }),
   /** LINE-style separate windows: `albums` (tab albums/notes), `media`
    *  (tab media/links/files) or `calendar` (`post` is the day to open on). */
   openAuxWindow: (kind: "albums" | "media" | "calendar", chatId: string, title: string, tab?: string, post?: string) =>

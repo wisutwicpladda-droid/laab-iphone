@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { api, errorText, q, useChatList, usePeople, useSession } from "../lib/api";
 import { isGroup } from "../lib/chatList";
 import { fullStamp } from "../lib/time";
+import { isIOS } from "../lib/platform";
 import type { ViewerItem, ViewerPayload } from "../lib/viewer";
 import {
   BookmarkIcon,
@@ -204,6 +205,8 @@ function Actions({ item, say }: { item: ViewerItem; say: (text: string) => void 
   const run = (p: Promise<unknown>, done: string) => p.then(() => done && say(done)).catch((e) => say(errorText(e)));
   const local = () => (attachment ? api.download(chatId!, messageId!, item.fileName ?? null) : Promise.resolve(item.path!));
   const saveAs = async () => {
+    // iPhone: into Photos, as LINE does.
+    if (isIOS && attachment) return run(api.saveToPhotos(chatId!, messageId!), "บันทึกลงรูปภาพแล้ว");
     // Named by what the file really is (a GIF, a PNG, a HEIC photo...).
     const name =
       item.fileName ?? (await api.attachmentName(chatId!, messageId!).catch(() => `LINE_${messageId}.${item.video ? "mp4" : "jpg"}`));

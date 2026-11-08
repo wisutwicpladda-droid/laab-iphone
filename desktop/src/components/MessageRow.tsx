@@ -228,6 +228,9 @@ const fileNameOf = (m: Message) =>
 /** LINE for Mac's links under a photo, a video or photos sent together.
  *  Under a grid they act on every photo in it. */
 function MediaLinks({ items, ctx }: { items: Message[]; ctx: RowContext }) {
+  // LINE for iPhone has no links under photos: saving is in the long-press
+  // menu and the viewer.
+  if (isIOS) return null;
   const one = items.length === 1;
   // One at a time, so a big batch doesn't start every download at once.
   const each = async <T,>(f: (m: Message) => Promise<T>) => {
@@ -568,6 +571,10 @@ function rowMenu(m: Message, dev: boolean, ctx?: RowContext, reaction?: { mine?:
         </>
       )}
       {live && item("ตอบกลับ", () => setUi({ composerMode: { chatId: ctx.chatId, kind: "reply", message: m }, composerFocus: Date.now() }))}
+      {isIOS &&
+        sent &&
+        (m.contentType === "IMAGE" || m.contentType === "VIDEO") &&
+        item("บันทึก", () => run(api.saveToPhotos(ctx.chatId, m.id), m.contentType === "VIDEO" ? "บันทึกวิดีโอลงรูปภาพแล้ว" : "บันทึกรูปลงรูปภาพแล้ว"))}
       {item(
         "คัดลอก",
         () => (copyPhoto ? run(api.messageBytes(ctx.chatId, m.id).then(copyImage), "คัดลอกรูปแล้ว") : writeText(copyText)),

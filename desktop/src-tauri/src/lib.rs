@@ -280,6 +280,7 @@ pub fn run() {
             commands::set_focus,
             commands::set_stealth_read,
             commands::send_voice_bytes,
+            commands::save_to_photos,
             commands::open_chat,
             commands::mark_read,
             commands::mark_unread,

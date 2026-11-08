@@ -1931,6 +1931,74 @@ pub async fn save_attachment(
     Ok(target.to_string_lossy().into_owned())
 }
 
+/// iPhone: save a photo or video message to the Photos library, as LINE's
+/// "บันทึก" does. iOS asks once for permission to add photos.
+#[tauri::command]
+pub async fn save_to_photos(app: tauri::AppHandle, state: S<'_>, chat_id: String, message_id: String) -> R<()> {
+    #[cfg(target_os = "ios")]
+    {
+        let s = state.inner().clone();
+        let (m, src) = attachment(&s, &chat_id, &message_id).await?;
+        let name = crate::media::save_name(m.file_name.as_deref(), &message_id, &src);
+        // Photos reads the file after this returns, so it stays in tmp.
+        let target = std::env::temp_dir().join(format!("photos-{name}"));
+        crate::vault::export(&src, &target).map_err(err)?;
+        let video = m.content_type == "VIDEO";
+        let path = target.to_string_lossy().into_owned();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        app.run_on_main_thread(move || {
+            let _ = tx.send(ios_photos::save(&path, video));
+        })
+        .map_err(err)?;
+        rx.await.map_err(err)?.map_err(|e| e.to_string())
+    }
+    #[cfg(not(target_os = "ios"))]
+    {
+        let _ = (app, state, chat_id, message_id);
+        Err("บันทึกลงรูปภาพได้เฉพาะบน iPhone".into())
+    }
+}
+
+#[cfg(target_os = "ios")]
+mod ios_photos {
+    use objc2::runtime::AnyObject;
+    use objc2::{class, msg_send};
+    use std::ffi::{CString, c_void};
+
+    #[link(name = "UIKit", kind = "framework")]
+    unsafe extern "C" {
+        fn UIImageWriteToSavedPhotosAlbum(image: *mut AnyObject, target: *mut AnyObject, selector: *const c_void, context: *mut c_void);
+        fn UISaveVideoAtPathToSavedPhotosAlbum(path: *mut AnyObject, target: *mut AnyObject, selector: *const c_void, context: *mut c_void);
+        fn UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(path: *mut AnyObject) -> bool;
+    }
+
+    /// Hand the file to Photos. Runs on the main thread.
+    pub fn save(path: &str, video: bool) -> Result<(), &'static str> {
+        let c = CString::new(path).map_err(|_| "ชื่อไฟล์ไม่ถูกต้อง")?;
+        // SAFETY: UIKit calls on the main thread with a live NSString; a
+        // nil target means no completion callback.
+        unsafe {
+            let ns: *mut AnyObject = msg_send![class!(NSString), stringWithUTF8String: c.as_ptr()];
+            if ns.is_null() {
+                return Err("ชื่อไฟล์ไม่ถูกต้อง");
+            }
+            if video {
+                if !UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(ns) {
+                    return Err("วิดีโอนี้บันทึกลงรูปภาพไม่ได้");
+                }
+                UISaveVideoAtPathToSavedPhotosAlbum(ns, std::ptr::null_mut(), std::ptr::null(), std::ptr::null_mut());
+            } else {
+                let image: *mut AnyObject = msg_send![class!(UIImage), imageWithContentsOfFile: ns];
+                if image.is_null() {
+                    return Err("เปิดรูปนี้ไม่ได้");
+                }
+                UIImageWriteToSavedPhotosAlbum(image, std::ptr::null_mut(), std::ptr::null(), std::ptr::null_mut());
+            }
+        }
+        Ok(())
+    }
+}
+
 /// A message's attachment in the cache, downloaded if it isn't there yet.
 async fn attachment(s: &Arc<AppState>, chat_id: &str, message_id: &str) -> R<(Message, std::path::PathBuf)> {
     let m = s
