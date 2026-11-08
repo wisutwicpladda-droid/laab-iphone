@@ -28,6 +28,10 @@ import { SearchPalette } from "./SearchPalette";
 const RAIL = 63;
 const MIN_DETAIL = 360;
 
+/** The last chat is reopened once per launch. The layout remounts when the
+ *  route changes, so a ref would reopen it again on the way back to the list. */
+let restoredOnce = false;
+
 export function MainLayout({ chatId }: { chatId: string | null }) {
   const session = useSession();
   const loginPage = useLoginPage();
@@ -74,10 +78,10 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
 
   // Reopen the last chat on launch (demo opens the team chat). LINE for
   // iPhone starts on the chat list, so a signed-in iPhone does too.
-  const restored = useRef(false);
   useEffect(() => {
-    if (restored.current || !list || chatId) return;
-    restored.current = true;
+    if (restoredOnce || !list) return;
+    restoredOnce = true;
+    if (chatId) return;
     const demo = session?.state === "demo";
     if (isIOS && !demo) return;
     const last = [localStorage.getItem(LAST_CHAT_KEY), demo ? "c_harvest" : null].find(
