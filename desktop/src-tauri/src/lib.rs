@@ -232,6 +232,14 @@ pub fn run() {
             }
 
             if demo {
+                // Simulator screenshots: the chat list after the chat.
+                if let Some(secs) = std::env::var("LAAB_DEMO_LIST_AFTER").ok().and_then(|v| v.parse::<u64>().ok()) {
+                    let handle = app.handle().clone();
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_secs(secs));
+                        let _ = handle.emit("mobile-route", "/");
+                    });
+                }
                 state.update_session(|s| {
                     s.state = "demo".into();
                     s.status = "โหมด demo".into();

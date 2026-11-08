@@ -72,12 +72,15 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
   }, [frame]);
   const width = Math.min(Math.max(240, savedWidth), Math.max(240, windowWidth - RAIL - MIN_DETAIL));
 
-  // Reopen the last chat on launch (demo opens the team chat).
+  // Reopen the last chat on launch (demo opens the team chat). LINE for
+  // iPhone starts on the chat list, so a signed-in iPhone does too.
   const restored = useRef(false);
   useEffect(() => {
     if (restored.current || !list || chatId) return;
     restored.current = true;
-    const last = [localStorage.getItem(LAST_CHAT_KEY), session?.state === "demo" ? "c_harvest" : null].find(
+    const demo = session?.state === "demo";
+    if (isIOS && !demo) return;
+    const last = [localStorage.getItem(LAST_CHAT_KEY), demo ? "c_harvest" : null].find(
       (id) => id && list.chats.some((c) => c.id === id),
     );
     if (last) openChat(last, { focusComposer: false });

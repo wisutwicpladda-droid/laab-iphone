@@ -41,7 +41,7 @@ try:
     run('xcrun', 'simctl', 'privacy', udid, 'grant', 'microphone', identifier, timeout=30)
 except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
     (out / 'mic-grant-error.txt').write_text(type(error).__name__)
-env = dict(os.environ, SIMCTL_CHILD_LAAB_DEMO='1', SIMCTL_CHILD_RUST_BACKTRACE='1', SIMCTL_CHILD_RUST_LOG='laab_lib=debug,line_rs=warn')
+env = dict(os.environ, SIMCTL_CHILD_LAAB_DEMO='1', SIMCTL_CHILD_LAAB_DEMO_LIST_AFTER='115', SIMCTL_CHILD_RUST_BACKTRACE='1', SIMCTL_CHILD_RUST_LOG='laab_lib=debug,line_rs=warn')
 with (out / 'console.log').open('w') as log:
     process = subprocess.Popen(['xcrun', 'simctl', 'launch', '--console', '--terminate-running-process', udid, identifier], stdout=log, stderr=subprocess.STDOUT, env=env)
     # Allow slow cold starts on shared Mac runners; retain the app's stderr.
@@ -57,10 +57,10 @@ with (out / 'console.log').open('w') as log:
             run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-iphone-dark.png').resolve(), timeout=60)
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
             (out / 'dark-screenshot-error.txt').write_text(type(error).__name__)
-        # The chat list too, in dark then light mode.
+        # The chat list too (the demo goes back to it 115 s after start), in
+        # dark then light mode.
         try:
-            run('xcrun', 'simctl', 'openurl', udid, 'laab://home', timeout=30)
-            time.sleep(4)
+            time.sleep(22)
             run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-list-dark.png').resolve(), timeout=60)
             run('xcrun', 'simctl', 'ui', udid, 'appearance', 'light', timeout=30)
             time.sleep(4)
