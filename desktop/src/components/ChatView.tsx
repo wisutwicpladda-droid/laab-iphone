@@ -369,9 +369,22 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
         // LINE for Mac: a bordered field with the count and arrows inside,
         // then close, in the announcement bar's place. Opened with ⌘F, so it
         // appears at once.
-        <div className="flex h-12 shrink-0 items-center gap-2 overflow-hidden px-4 shadow-[0_2px_4px_rgba(0,0,0,0.15)]">
-          <label className="flex h-[30px] flex-1 items-center gap-2 rounded-[6px] border border-secondary/45 px-2.5">
-            <SearchIcon size={14} className="shrink-0 text-secondary" />
+        // iPhone: a round field on glass with ⌃⌄ and "ยกเลิก", as in LINE.
+        <div
+          className={
+            isIOS
+              ? "flex h-[52px] shrink-0 items-center gap-2 overflow-hidden px-3"
+              : "flex h-12 shrink-0 items-center gap-2 overflow-hidden px-4 shadow-[0_2px_4px_rgba(0,0,0,0.15)]"
+          }
+        >
+          <label
+            className={
+              isIOS
+                ? "ios-glass flex h-[40px] min-w-0 flex-1 items-center gap-1.5 rounded-full pr-1 pl-3.5"
+                : "flex h-[30px] flex-1 items-center gap-2 rounded-[6px] border border-secondary/45 px-2.5"
+            }
+          >
+            <SearchIcon size={isIOS ? 17 : 14} className="shrink-0 text-secondary" />
             <input
               ref={searchInput}
               autoFocus
@@ -384,29 +397,37 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
                 }
               }}
               placeholder="ค้นหาข้อความ, ชื่อ"
-              className="selectable min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-secondary"
+              className={`selectable min-w-0 flex-1 bg-transparent outline-none placeholder:text-secondary ${isIOS ? "text-[16px]" : "text-[13px]"}`}
             />
             <span className="shrink-0 text-[12.5px] text-secondary">
               {search.debounced.trim() ? (hits.length ? `${search.index + 1}/${hits.length}` : "ไม่พบ") : ""}
             </span>
             <button
               title="ผลถัดไป (เก่ากว่า) ⌘G"
+              aria-label="ผลที่เก่ากว่า"
               onClick={() => step(1)}
-              className="grid h-6 w-5 place-items-center text-secondary hover:text-primary"
+              className={isIOS ? "grid h-9 w-9 place-items-center rounded-full text-primary active:bg-primary/10" : "grid h-6 w-5 place-items-center text-secondary hover:text-primary"}
             >
-              <ChevronIcon dir="up" size={13} />
+              <ChevronIcon dir="up" size={isIOS ? 17 : 13} />
             </button>
             <button
               title="ผลก่อนหน้า (ใหม่กว่า) ⇧⌘G"
+              aria-label="ผลที่ใหม่กว่า"
               onClick={() => step(-1)}
-              className="grid h-6 w-5 place-items-center text-secondary hover:text-primary"
+              className={isIOS ? "grid h-9 w-9 place-items-center rounded-full text-primary active:bg-primary/10" : "grid h-6 w-5 place-items-center text-secondary hover:text-primary"}
             >
-              <ChevronIcon dir="down" size={13} />
+              <ChevronIcon dir="down" size={isIOS ? 17 : 13} />
             </button>
           </label>
-          <button title="ปิด (Esc)" onClick={closeSearch} className="grid h-7 w-7 place-items-center text-secondary hover:text-primary">
-            <CloseIcon size={18} />
-          </button>
+          {isIOS ? (
+            <button onClick={closeSearch} className="ios-chat-title shrink-0 px-1 text-[16px] font-medium">
+              ยกเลิก
+            </button>
+          ) : (
+            <button title="ปิด (Esc)" onClick={closeSearch} className="grid h-7 w-7 place-items-center text-secondary hover:text-primary">
+              <CloseIcon size={18} />
+            </button>
+          )}
         </div>
       )}
       {loadError && <div className="px-5 py-2 text-[12px] text-badge-red">โหลดข้อความไม่สำเร็จ: {errorText(loadError)}</div>}
