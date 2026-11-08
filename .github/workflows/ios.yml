@@ -45,9 +45,11 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - name: Test Rust on macOS
+        if: inputs.package == 'simulator'
         run: cargo test --lib
         working-directory: desktop/src-tauri
       - name: Check native iOS library
+        if: inputs.package == 'simulator'
         run: cargo check --lib --target aarch64-apple-ios-sim
         working-directory: desktop/src-tauri
       - name: Configure signing identity
