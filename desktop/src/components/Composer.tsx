@@ -480,7 +480,7 @@ export const Composer = forwardRef<
         <div
           ref={mirror}
           aria-hidden
-          className="pointer-events-none absolute inset-0 overflow-hidden text-[14px] break-words whitespace-pre-wrap text-primary"
+          className="composer-mirror pointer-events-none absolute inset-0 overflow-hidden text-[14px] break-words whitespace-pre-wrap text-primary"
           style={{ lineHeight: `${LINE_HEIGHT}px` }}
         >
           {mirrored}
