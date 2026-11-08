@@ -133,4 +133,7 @@ The screenshot shows the real Tauri iOS app rendering sample chats, with its nat
 backend running in demo mode. This validates startup/UI/IPC, not a real LINE
 session or a production Keychain identity. On Windows, the user manually reached
 the iOS developer-profile trust prompt after signing/installing with Sideloadly;
-physical launch confirmation is still pending.
+the user then confirmed the app opens and is usable on a physical iPhone (iOS 27.0.1).
+If iOS keeps showing Untrusted Developer after tapping Trust, connect to the internet,
+disable VPN/DNS blockers, use Verify App in VPN & Device Management, and enable
+Developer Mode.

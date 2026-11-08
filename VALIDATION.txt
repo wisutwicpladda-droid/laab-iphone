@@ -40,10 +40,11 @@ WINDOWS INSTALL PREPARATION:
   Sideloadly v0.72 installed and IPA selected.
   Apple Mobile Device Support 20.0.1.47 installed from Apple-signed MSI.
   Apple Mobile Device Service running, USB phone detected.
-  User manually signed/installed and reported the iOS Untrusted Developer prompt.
-  Trusting the profile and opening the app on the real phone await user confirmation.
+  User signed/installed with a free Apple ID in Sideloadly (Done, 100%).
+PASS (user report): LAAB opens and is usable on the physical iPhone (iOS 27.0.1)
+  after trusting the developer profile and verifying it online.
 
-NOT TESTED: physical iPhone signing/install, real LINE login, sending/receiving
+NOT TESTED BY THE ASSISTANT: individual LINE features on the real phone, sending/receiving
 on LINE, photos/files on a real device, actual iOS keyboard, background lifecycle.
 Push notifications/background sync are not implemented. LIFF/devtools and MCP
 still need mobile-specific behavior; see docs/IPHONE.md.
