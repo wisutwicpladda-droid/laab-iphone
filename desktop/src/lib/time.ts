@@ -36,6 +36,18 @@ export function listLabel(value: number, now = new Date()): string {
   return d.getFullYear() === now.getFullYear() ? dm : `${dm} ${d.getFullYear()}`;
 }
 
+/** LINE for iPhone's chat list: "21:45", "เมื่อวาน", "วันศุกร์", "21 ก.ย.". */
+export function iosListLabel(value: number, now = new Date()): string {
+  const d = toDate(value);
+  if (!d) return "";
+  const days = dayDiff(d, now);
+  if (days === 0) return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (days === 1) return "เมื่อวาน";
+  if (days > 1 && days < 7) return `วัน${weekdays[d.getDay()]}`;
+  const dm = `${d.getDate()} ${months[d.getMonth()]}`;
+  return d.getFullYear() === now.getFullYear() ? dm : `${dm} ${d.getFullYear()}`;
+}
+
 export function dayHeader(value: number, now = new Date()): string {
   const d = toDate(value);
   if (!d) return "";

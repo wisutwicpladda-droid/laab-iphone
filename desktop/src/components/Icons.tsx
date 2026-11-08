@@ -336,6 +336,21 @@ export const CalendarIcon = (p: P) => (
     <path d="M8 3.5v4M16 3.5v4M4 10.5h16" />
   </svg>
 );
+/** LINE for iPhone's calendar button, with today's date in it. */
+export const CalendarDayIcon = ({ day, ...p }: P & { day: number }) => (
+  <svg {...base(p)} fill="none" stroke="currentColor" strokeWidth={p.strokeWidth ?? 1.7} strokeLinejoin="round">
+    <rect x="3.5" y="4.5" width="17" height="16" rx="3.5" />
+    <path d="M3.5 8.5h17" />
+    <text x="12" y="17.6" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="currentColor" stroke="none" fontFamily="-apple-system, sans-serif">
+      {day}
+    </text>
+  </svg>
+);
+export const CaretDownIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M6.2 9.2a.8.8 0 0 1 .6-1.3h10.4a.8.8 0 0 1 .6 1.3l-5.2 6.1a.8.8 0 0 1-1.2 0L6.2 9.2Z" />
+  </svg>
+);
 export const BellIcon = (p: P) => (
   <svg {...outline(p)}>
     <path d="M6 16.5V10.5a6 6 0 0 1 12 0v6l1.5 2h-15L6 16.5Z" />

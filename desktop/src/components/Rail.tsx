@@ -34,6 +34,7 @@ function RailButton({
       title={title}
       disabled={disabled}
       onClick={onClick}
+      data-active={active || undefined}
       className={`rail-button no-drag relative flex h-10 w-11 flex-col items-center justify-center rounded-lg disabled:opacity-40 ${active ? "text-rail-icon-active" : "text-rail-icon hover:text-rail-icon-active"} ${className}`}
     >
       {children}

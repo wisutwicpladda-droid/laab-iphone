@@ -9,6 +9,7 @@ import { Avatar } from "./Avatar";
 import { BookmarkIcon, ChevronIcon, PersonPlusIcon, SearchIcon } from "./Icons";
 import { Spinner } from "./kit";
 import { isIOS } from "../lib/platform";
+import { IosSegmentHeader } from "./ChatList";
 
 /** LINE for iPhone: each tab opens with a large title. */
 const IosTitle = ({ children }: { children: string }) => (
@@ -38,9 +39,9 @@ function Section({ title, items }: { title: string; items: Row[] }) {
           <button
             key={c.id}
             onClick={() => open(c.id)}
-            className="flex h-[50px] w-full items-center gap-3 px-4 text-left hover:bg-row-hover"
+            className={`flex w-full items-center gap-3 px-4 text-left hover:bg-row-hover ${isIOS ? "h-[62px] active:bg-row-selected" : "h-[50px]"}`}
           >
-            <Avatar id={c.id} name={c.name} size={38} picture={c.picture} local={c.avatar} />
+            <Avatar id={c.id} name={c.name} size={isIOS ? 46 : 38} picture={c.picture} local={c.avatar} />
             <span className="truncate text-[13.5px]">
               {c.name}
               {c.kind === "group" && c.memberCount ? ` (${c.memberCount})` : ""}
@@ -52,8 +53,9 @@ function Section({ title, items }: { title: string; items: Row[] }) {
 }
 
 /** LINE for Mac's friends page: search by name, your profile with Keep
- *  Memo, then groups and friends. */
-export function FriendsPage() {
+ *  Memo, then groups and friends. On iPhone it is also the "เพื่อน" side of
+ *  the chats tab (`segment`), under the "แชท | เพื่อน" switch. */
+export function FriendsPage({ segment = false }: { segment?: boolean }) {
   const list = useChatList();
   const s = useSession();
   const [query, setQuery] = useState("");
@@ -82,10 +84,10 @@ export function FriendsPage() {
   }, [friendList, list, q, me?.mid]);
   return (
     <div className="flex h-full flex-col bg-list">
-      {isIOS && <IosTitle>หน้าหลัก</IosTitle>}
+      {isIOS && (segment ? <IosSegmentHeader active="friends" /> : <IosTitle>หน้าหลัก</IosTitle>)}
       <div className={isIOS ? "px-4 pt-2 pb-2" : "drag px-4 pt-[34px] pb-2"} data-tauri-drag-region={isIOS ? undefined : true}>
         <label className="list-search no-drag flex h-8 items-center gap-2 rounded-md bg-field px-2.5 text-secondary">
-          <SearchIcon size={14} />
+          <SearchIcon size={isIOS ? 17 : 14} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -97,9 +99,9 @@ export function FriendsPage() {
       <div className="min-h-0 flex-1 overflow-y-auto pb-4">
         {me && !q && (
           <div className="flex items-center gap-3 px-4 py-2.5">
-            <Avatar id={me.mid} name={me.displayName} picture={me.picture} size={52} />
+            <Avatar id={me.mid} name={me.displayName} picture={me.picture} size={isIOS ? 60 : 52} />
             <div className="min-w-0">
-              <div className="truncate text-[14px]">{me.displayName}</div>
+              <div className={isIOS ? "truncate text-[18px] font-semibold" : "truncate text-[14px]"}>{me.displayName}</div>
               <button
                 onClick={() => open(me.mid)}
                 className="mt-1 flex items-center gap-1 rounded-full border border-secondary/40 px-2.5 py-0.5 text-[11.5px] hover:bg-row-hover"

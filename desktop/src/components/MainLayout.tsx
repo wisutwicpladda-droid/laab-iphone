@@ -33,6 +33,7 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
   const folded = useUi((s) => s.chatFolded);
   const frame = useUi((s) => s.foldFrame);
   const page = useUi((s) => s.railPage);
+  const segment = useUi((s) => s.chatsSegment);
   const savedWidth = useUi((s) => s.listWidth);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   // While the window slides open or shut, every animation frame is a resize;
@@ -135,7 +136,15 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
         style={folded && !frame ? undefined : { width: frame?.list ?? width }}
         className={`laab-chat-list relative h-full overflow-hidden ${folded && !frame ? "min-w-0 flex-1" : "shrink-0"} ${frame ? "[contain:strict]" : ""}`}
       >
-        {page === "friends" ? <FriendsPage /> : page === "add" ? <AddFriendPage /> : <ChatListColumn selected={chatId} />}
+        {page === "friends" ? (
+          <FriendsPage />
+        ) : page === "add" ? (
+          <AddFriendPage />
+        ) : isIOS && segment === "friends" ? (
+          <FriendsPage segment />
+        ) : (
+          <ChatListColumn selected={chatId} />
+        )}
       </div>
       <div className="laab-divider relative w-px shrink-0 bg-separator">
         {!folded && !frame && <ResizeHandle width={width} />}

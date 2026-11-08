@@ -75,6 +75,8 @@ export interface UiState {
   profile: { mid: string; name?: string; picture?: string | null } | null;
   /** What the column next to the left bar shows: chats, friends, add friend. */
   railPage: "chats" | "friends" | "add";
+  /** iPhone: the "แชท | เพื่อน" switch at the top of the chats tab. */
+  chatsSegment: "chats" | "friends";
   /** When this app last sent a message; that message scrolls the chat down. */
   sentAt: number;
   /** The announcement list over the chat is open. */
@@ -109,6 +111,7 @@ export const ui = createStore<UiState>({
   announcementsOpen: false,
   sentAt: 0,
   railPage: "chats",
+  chatsSegment: "chats",
   composerMode: null,
   forwarding: null,
   translations: {},
