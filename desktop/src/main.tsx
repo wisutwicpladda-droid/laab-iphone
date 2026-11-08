@@ -21,14 +21,21 @@ function App() {
     const viewport = window.visualViewport;
     const resize = () => {
       const height = viewport?.height ?? window.innerHeight;
-      document.documentElement.style.setProperty("--app-height", `${height}px`);
+      const keyboard = height < window.innerHeight - 120;
+      // The whole screen, except above the keyboard. The visual viewport can
+      // be read before the web view has its final size, which left a band
+      // under the app; the layout viewport is the screen.
+      document.documentElement.style.setProperty("--app-height", keyboard ? `${height}px` : "100%");
       // The keyboard covers the home indicator, so its safe area is not needed.
-      document.documentElement.classList.toggle("keyboard", height < window.innerHeight - 120);
+      document.documentElement.classList.toggle("keyboard", keyboard);
       // Bottom sheets sit on the keyboard, not under it.
       const under = Math.max(0, window.innerHeight - (viewport?.offsetTop ?? 0) - height);
       document.documentElement.style.setProperty("--sheet-bottom", `${under}px`);
     };
     resize();
+    // The web view may still be growing to full screen at launch.
+    const late = [setTimeout(resize, 300), setTimeout(resize, 1200)];
+    window.addEventListener("resize", resize);
     viewport?.addEventListener("resize", resize);
     viewport?.addEventListener("scroll", resize);
     const changed = () => setHash(location.hash);
@@ -36,6 +43,8 @@ function App() {
     const off = listen<string>("mobile-route", e => { location.hash = e.payload; });
     return () => {
       viewport?.removeEventListener("resize", resize);
+      window.removeEventListener("resize", resize);
+      late.forEach(clearTimeout);
       viewport?.removeEventListener("scroll", resize);
       window.removeEventListener("hashchange", changed);
       off.then(f => f());

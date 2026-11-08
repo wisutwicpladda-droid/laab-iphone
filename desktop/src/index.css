@@ -118,7 +118,7 @@ body,
 
 /* Native iOS: one pane, safe areas and the visual viewport above the keyboard. */
 .ios #root {
-  height: var(--app-height, 100dvh);
+  height: var(--app-height, 100%);
   box-sizing: border-box;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
@@ -215,7 +215,7 @@ body,
 /* Full screen in a chat: no page padding; the header takes the status bar's
    height and the message bar (or the panel under it) the home indicator's. */
 .ios.in-chat #root { padding-top: 0; padding-bottom: 0; }
-.ios.in-chat, .ios.in-chat body { background: light-dark(#7494c0, #1c1c1e); }
+.ios.in-chat, .ios.in-chat body, .ios.in-chat #root { background: light-dark(#7494c0, #1c1c1e); }
 .ios.in-chat .ios-chat-bar { height: calc(58px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
 .ios.in-chat .has-chat.swiping > .laab-chat-list { padding-top: env(safe-area-inset-top); }
 .ios .ios-chat.panel-open .composer-root { padding-bottom: 7px; }
