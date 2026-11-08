@@ -19,7 +19,7 @@ import {
 import type { ChatMember, DraftMention } from "../lib/types";
 import { pushDismiss, setUi, useUi } from "../lib/ui";
 import { Avatar } from "./Avatar";
-import { CameraOutlineIcon, ChevronIcon, CloseIcon, ImageOutlineIcon, PaperclipIcon, PlusIcon, SendIcon, SmileIcon, WarningIcon } from "./Icons";
+import { CameraOutlineIcon, ChevronIcon, CloseIcon, ImageOutlineIcon, MicIcon, PaperclipIcon, PlusIcon, SendIcon, SmileIcon, WarningIcon } from "./Icons";
 
 const LINE_HEIGHT = 20;
 const MAX_LINES = 6;
@@ -66,12 +66,20 @@ export const Composer = forwardRef<
     loadMembers: () => void;
     stickerOpen: boolean;
     onToggleStickers: () => void;
+    /** iPhone: the voice message panel, from the mic in the send button's place. */
+    voiceOpen?: boolean;
+    onToggleVoice?: () => void;
+    /** iPhone: the field took focus (the keyboard replaces any panel). */
+    onFieldFocus?: () => void;
     name: (mid: string) => string;
     picture?: (mid: string) => string | null;
     /** ↑/↓ in an empty field move to the chat above or below, as in LINE. */
     onStep?: (step: 1 | -1) => void;
   }
->(function Composer({ chatId, group, disabled, members, loadMembers, stickerOpen, onToggleStickers, name, picture, onStep }, ref) {
+>(function Composer(
+  { chatId, group, disabled, members, loadMembers, stickerOpen, onToggleStickers, voiceOpen = false, onToggleVoice, onFieldFocus, name, picture, onStep },
+  ref,
+) {
   const area = useRef<HTMLTextAreaElement>(null);
   const mirror = useRef<HTMLDivElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
@@ -153,7 +161,8 @@ export const Composer = forwardRef<
   }, [chatId, text, mentions]);
 
   useEffect(() => {
-    if (focusRequest) area.current?.focus();
+    // LINE for iPhone opens a chat without the keyboard.
+    if (focusRequest && !isIOS) area.current?.focus();
   }, [focusRequest]);
 
   useEffect(() => {
@@ -610,6 +619,7 @@ export const Composer = forwardRef<
           }}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
+          onFocus={() => onFieldFocus?.()}
           className="selectable absolute inset-0 w-full resize-none bg-transparent text-[14px] text-transparent caret-primary outline-none placeholder:text-secondary/70 disabled:opacity-50"
           style={{ lineHeight: `${LINE_HEIGHT}px` }}
         />
@@ -626,18 +636,30 @@ export const Composer = forwardRef<
             </button>
           )}
         </div>
-        {isIOS && (
+        {isIOS && !text.trim() && !pendingImage && onToggleVoice ? (
+          // LINE for iPhone: a mic while there is nothing to send.
+          <button
+            type="button"
+            title="ข้อความเสียง"
+            aria-label="ข้อความเสียง"
+            disabled={disabled}
+            onClick={(e) => (e.stopPropagation(), onToggleVoice())}
+            className={`ios-glass grid h-[40px] w-[40px] shrink-0 place-items-center rounded-full disabled:opacity-40 ${voiceOpen ? "text-line-green" : "text-primary"}`}
+          >
+            <MicIcon size={22} strokeWidth={1.8} />
+          </button>
+        ) : isIOS ? (
           <button
             type="button"
             title="ส่ง"
             aria-label="ส่ง"
             disabled={disabled || sending || (!text.trim() && !pendingImage)}
             onClick={(e) => (e.stopPropagation(), void send(false))}
-            className="-mr-1.5 grid h-[38px] w-10 shrink-0 place-items-center text-line-green disabled:text-secondary/40"
+            className="grid h-[40px] w-[40px] shrink-0 place-items-center rounded-full bg-line-green text-white disabled:opacity-50"
           >
-            <SendIcon size={24} />
+            <SendIcon size={20} />
           </button>
-        )}
+        ) : null}
       </div>
       {/* LINE for Mac: 📎 on the left, 🙂 (stickers) on the right, no send
           button; Return sends. */}

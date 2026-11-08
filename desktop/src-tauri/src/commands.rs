@@ -680,6 +680,39 @@ pub async fn send_image_bytes(state: S<'_>, request: tauri::ipc::Request<'_>) ->
     Ok(())
 }
 
+/// Sends a voice message recorded in the app (AAC in an MP4/M4A container,
+/// as iPhone's recorder makes it), as raw IPC bytes. `duration-ms` is the
+/// clip's length, which LINE shows on the bubble.
+#[tauri::command]
+pub async fn send_voice_bytes(state: S<'_>, request: tauri::ipc::Request<'_>) -> R<()> {
+    let s = state.inner().clone();
+    if s.demo {
+        return Err("ต้องเข้าสู่ระบบ LINE ก่อนส่งข้อความเสียง".into());
+    }
+    let tauri::ipc::InvokeBody::Raw(data) = request.body() else {
+        return Err("ไม่พบเสียงที่อัดไว้".into());
+    };
+    let header = |key: &str| request.headers().get(key).and_then(|v| v.to_str().ok());
+    let chat_id = header("chat-id").ok_or("missing chat id")?.to_string();
+    let duration: u64 = header("duration-ms").and_then(|v| v.parse().ok()).unwrap_or(0);
+    if line_rs::obs::check_media_size(ObjType::Audio, data.len()).is_err() {
+        return Err(too_large(ObjType::Audio).to_string());
+    }
+    let l = s.line().await.ok_or("not_logged_in")?;
+    s.status("กำลังส่งข้อความเสียง");
+    let mut opts = MediaOptions::new();
+    if duration > 0 {
+        opts = opts.duration_ms(duration);
+    }
+    let file = ObsFile::new(data.to_vec()).name("voice.m4a".to_string());
+    let res = l.chat(&chat_id).send_media_with(ObjType::Audio, file, opts).await;
+    let out = sent_result(&s, "ข้อความเสียง", ObjType::Audio, res);
+    s.status("เชื่อม LINE แล้ว");
+    out?;
+    let _ = line::fetch_history(&s, &chat_id).await;
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn download(
     state: S<'_>,

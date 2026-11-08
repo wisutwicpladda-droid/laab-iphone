@@ -253,6 +253,7 @@ pub fn run() {
             commands::members,
             commands::set_focus,
             commands::set_stealth_read,
+            commands::send_voice_bytes,
             commands::open_chat,
             commands::mark_read,
             commands::mark_unread,

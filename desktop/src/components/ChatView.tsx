@@ -21,7 +21,10 @@ import { RichMenu } from "./RichMenu";
 import { BellSlashIcon, ChevronIcon, CloseIcon, ExternalIcon, EyeSlashIcon, MenuLinesIcon, MoreVIcon, NoteIcon, SearchIcon, SpeakerIcon } from "./Icons";
 import { popupClass, Spinner } from "./kit";
 import type { RowContext } from "./MessageRow";
-import { StickerPanel } from "./StickerPanel";
+import { StickerPanel, sendSticker } from "./StickerPanel";
+import { VoicePanel } from "./VoicePanel";
+import type { Sticker } from "../lib/types";
+import { mediaUrl } from "../lib/api";
 import { type Older, Timeline } from "./Timeline";
 
 /** Something else (a menu or dialog) is open and owns Escape. */
@@ -70,6 +73,22 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
   }, [group, membersQuery]);
   const composer = useRef<ComposerHandle>(null);
   const [stickers, setStickers] = useState(false);
+  // iPhone: the voice panel and a sticker waiting over the message bar.
+  const [voice, setVoice] = useState(false);
+  const [preview, setPreview] = useState<Sticker | null>(null);
+  const blurField = () => (document.activeElement as HTMLElement | null)?.blur?.();
+  const toggleStickers = () => {
+    if (isIOS) blurField();
+    setVoice(false);
+    setPreview(null);
+    setStickers((v) => !v);
+  };
+  const toggleVoice = () => {
+    blurField();
+    setStickers(false);
+    setPreview(null);
+    setVoice((v) => !v);
+  };
   const [search, setSearch] = useState<{ open: boolean; query: string; debounced: string; index: number }>({
     open: false,
     query: "",
@@ -101,6 +120,8 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
         .catch(() => {});
     }, 150);
     setStickers(false);
+    setVoice(false);
+    setPreview(null);
     setSearch({ open: false, query: "", debounced: "", index: 0 });
     return () => {
       cancelled = true;
@@ -186,6 +207,8 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
       e.preventDefault();
       if (composer.current?.dismissPicker()) return;
       if (search.open) return closeSearch();
+      if (preview) return setPreview(null);
+      if (voice) return setVoice(false);
       if (stickers) return setStickers(false);
       if (main) closeChat();
     };
@@ -237,7 +260,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
   // LINE for iPhone counts the other chats' unread messages beside "‹".
   const otherUnread = (list?.chats ?? []).reduce((n, c) => n + (c.id === chatId ? 0 : Math.max(0, c.unread)), 0);
   return (
-    <div className={`relative flex h-full flex-col bg-chat ${isIOS ? "ios-chat" : ""}`}>
+    <div className={`relative flex h-full flex-col bg-chat ${isIOS ? "ios-chat" : ""} ${isIOS && (stickers || voice) ? "panel-open" : ""}`}>
       {/* LINE for Mac: the header sits under a title-bar strip, level with
           the chat list's search box. */}
       <div className="desktop-title-space drag h-[56px] shrink-0" data-tauri-drag-region />
@@ -418,11 +441,37 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
         unreadFrom={unreadFrom}
         search={search.open && search.debounced.trim() ? { query: search.debounced, hits, index: search.index } : null}
       />
-      {stickers && <StickerPanel chatId={chatId} onClose={() => setStickers(false)} />}
+      {stickers && !isIOS && <StickerPanel chatId={chatId} onClose={() => setStickers(false)} />}
       {chat?.request && !chat.invited && <MessageRequestBar chat={chat} />}
       {chat?.invited ? (
         <InvitationBar chat={chat} />
       ) : (
+        <div className="relative shrink-0">
+          {preview && (
+            // LINE for iPhone: the chosen sticker waits here; tap it to send.
+            <div className="absolute right-0 bottom-full left-0 z-20 flex justify-center pb-2">
+              <div className="relative rounded-2xl bg-black/25 p-2">
+                <button
+                  aria-label="ส่งสติกเกอร์"
+                  onClick={() => {
+                    const s = preview;
+                    setPreview(null);
+                    void sendSticker(chatId, s);
+                  }}
+                  className="block"
+                >
+                  <img src={mediaUrl.sticker(preview.stickerId, false)} className="h-[120px] w-[120px] object-contain" alt="สติกเกอร์" draggable={false} />
+                </button>
+                <button
+                  aria-label="ยกเลิกสติกเกอร์"
+                  onClick={() => setPreview(null)}
+                  className="absolute -top-2 -right-2 grid h-7 w-7 place-items-center rounded-full bg-black/60 text-white"
+                >
+                  <CloseIcon size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         <Composer
           ref={composer}
           chatId={chatId}
@@ -431,7 +480,17 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
           members={members}
           loadMembers={loadMembers}
           stickerOpen={stickers}
-          onToggleStickers={() => setStickers((v) => !v)}
+          onToggleStickers={toggleStickers}
+          voiceOpen={voice}
+          onToggleVoice={isIOS ? toggleVoice : undefined}
+          onFieldFocus={
+            isIOS
+              ? () => {
+                  setStickers(false);
+                  setVoice(false);
+                }
+              : undefined
+          }
           name={name}
           picture={picture}
           onStep={
@@ -443,7 +502,10 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
               : undefined
           }
         />
+        </div>
       )}
+      {isIOS && stickers && <StickerPanel chatId={chatId} onClose={() => setStickers(false)} onPreview={setPreview} />}
+      {isIOS && voice && <VoicePanel chatId={chatId} />}
       {chat?.kind === "bot" && <RichMenu key={chatId} chatId={chatId} />}
       {uploading && (
         <div className="pointer-events-none absolute right-3 bottom-3 z-20 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[12px] text-white shadow-lg">

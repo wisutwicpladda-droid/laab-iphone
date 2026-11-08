@@ -359,6 +359,18 @@ export const EyeSlashIcon = (p: P) => (
     <path d="M4 4l16 16" />
   </svg>
 );
+export const MicIcon = (p: P) => (
+  <svg {...line(p)}>
+    <rect x="9" y="3" width="6" height="11.5" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+  </svg>
+);
+export const ClockIcon2 = (p: P) => (
+  <svg {...line(p)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+);
 export const BellIcon = (p: P) => (
   <svg {...outline(p)}>
     <path d="M6 16.5V10.5a6 6 0 0 1 12 0v6l1.5 2h-15L6 16.5Z" />

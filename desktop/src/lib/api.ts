@@ -98,6 +98,8 @@ export const api = {
     sent(invoke<{ path: string; error: string }[]>("send_files", { chatId, paths, silent })),
   sendImageBytes: (chatId: string, bytes: Uint8Array, fileName: string) =>
     sent(invoke<void>("send_image_bytes", bytes, { headers: { "chat-id": chatId, "file-name": encodeURIComponent(fileName) } })),
+  sendVoiceBytes: (chatId: string, bytes: Uint8Array, durationMs: number) =>
+    sent(invoke<void>("send_voice_bytes", bytes, { headers: { "chat-id": chatId, "duration-ms": String(Math.round(durationMs)) } })),
   messageBytes: (chatId: string, messageId: string) => invoke<ArrayBuffer>("message_bytes", { chatId, messageId }),
   download: (chatId: string, messageId: string, fileName: string | null) => invoke<string>("download", { chatId, messageId, fileName }),
   react: (chatId: string, messageId: string, reaction: ReactionName | null) => invoke<void>("react", { chatId, messageId, reaction }),

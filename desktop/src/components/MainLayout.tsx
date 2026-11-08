@@ -37,6 +37,13 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
   const segment = useUi((s) => s.chatsSegment);
   // iPhone: swipe from the left edge (or ‹) slides the chat away to the list.
   const layoutRef = useRef<HTMLDivElement>(null);
+  // iPhone: the chat draws its own background under the status bar and the
+  // home indicator.
+  useEffect(() => {
+    if (!isIOS) return;
+    document.documentElement.classList.toggle("in-chat", !!chatId);
+    return () => document.documentElement.classList.remove("in-chat");
+  }, [chatId]);
   useSwipeBack(
     isIOS && !!chatId,
     layoutRef,
