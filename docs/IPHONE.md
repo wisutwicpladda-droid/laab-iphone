@@ -17,9 +17,27 @@ The upstream snapshot is recorded in `UPSTREAM_COMMIT.txt`.
 
 ## Only have an iPhone: build on GitHub's Mac runner
 
-The workflow `.github/workflows/ios.yml` supplies a cloud Mac. It is prepared but
-has **not been run** in this workspace. Put these changes into your own GitHub fork
-(including the hidden `.github` folder), then use **Actions > iPhone build > Run workflow**.
+The workflow `.github/workflows/ios.yml` supplies a cloud Mac. This task created
+https://github.com/wisutwicpladda-droid/laab-iphone and started native validation.
+See `VALIDATION.txt` for the observed result. Use **Actions > iPhone build > Run workflow**.
+
+### Free Apple ID with a Windows computer
+
+1. Run the workflow with `unsigned-ipa` and download the `laab-ios-unsigned-ipa`
+   artifact after a successful run. Extract its `.ipa` on Windows.
+2. Install Sideloadly from https://sideloadly.io/ and its documented Apple drivers.
+3. Connect the iPhone over USB, unlock it, and trust the computer. Load the IPA in
+   Sideloadly, select the phone and sign in with your Apple ID in that app.
+4. Follow Sideloadly's installation and device-trust instructions. If iOS asks,
+   enable Developer Mode. Free-account apps expire in seven days unless refreshed.
+
+This avoids owning a Mac or buying Developer Program membership, but still needs
+access to a Windows computer for signing/installing. The unsigned IPA does not
+install by itself from Safari. This task has not installed Sideloadly, accessed an
+Apple account, or connected to the phone. Do not send Apple credentials in chat.
+
+### TestFlight (paid developer account)
+
 
 1. Start with `simulator`. It runs the frontend tests, macOS Rust tests, iOS Rust
    compilation, and then attempts an iOS simulator app build. Its ZIP **cannot be
@@ -39,9 +57,9 @@ has **not been run** in this workspace. Put these changes into your own GitHub f
    testers. Open the resulting invitation in TestFlight on the iPhone. Downloading
    an App Store IPA to Files or Safari alone does not install it.
 
-Without a signing account or someone providing a signed TestFlight build, there
-is no installable native app from this deliverable. No developer subscription,
-remote repository, build, or upload has been created on your behalf.
+If you cannot access a computer, someone must provide a signed distribution such
+as a TestFlight invitation. No developer subscription or Apple upload has been
+created on your behalf. The GitHub fork and CI run are the only remote changes.
 
 Official references:
 - https://v2.tauri.app/start/prerequisites/#ios
