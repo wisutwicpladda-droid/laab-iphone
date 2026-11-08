@@ -8,6 +8,10 @@ on:
         type: choice
         options: [unsigned-ipa, simulator, signed-ipa]
         default: unsigned-ipa
+      verify_native:
+        description: Run macOS Rust tests and iOS library check before simulator packaging
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -46,11 +50,11 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - name: Test Rust on macOS
-        if: inputs.package == 'simulator'
+        if: inputs.package == 'simulator' && inputs.verify_native
         run: cargo test --lib
         working-directory: desktop/src-tauri
       - name: Check native iOS library
-        if: inputs.package == 'simulator'
+        if: inputs.package == 'simulator' && inputs.verify_native
         run: cargo check --lib --target aarch64-apple-ios-sim
         working-directory: desktop/src-tauri
       - name: Configure signing identity
