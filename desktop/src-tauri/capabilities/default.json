@@ -2,7 +2,12 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "LAAB's own windows: the main window detached chat windows, aux windows and the photo viewer. LIFF windows load remote pages and get no permissions.",
-  "windows": ["main", "chat-*", "aux-*", "viewer"],
+  "windows": [
+    "main",
+    "chat-*",
+    "aux-*",
+    "viewer"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",
@@ -14,7 +19,6 @@
     "clipboard-manager:allow-write-text",
     "clipboard-manager:allow-read-image",
     "clipboard-manager:allow-write-image",
-    "deep-link:default",
-    "window-state:default"
+    "deep-link:default"
   ]
 }

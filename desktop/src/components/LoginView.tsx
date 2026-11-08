@@ -1,3 +1,4 @@
+import { isIOS } from "../lib/platform";
 import { motion } from "motion/react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
@@ -63,7 +64,7 @@ function PasswordLogin({ busy }: { busy: boolean }) {
 export function LoginView() {
   const s = useSession();
   const [qr, setQr] = useState<string | null>(null);
-  const [method, setMethod] = useState<"qr" | "password">("qr");
+  const [method, setMethod] = useState<"qr" | "password">(isIOS ? "password" : "qr");
   useEffect(() => {
     if (!s?.qrUrl) return setQr(null);
     QRCode.toDataURL(s.qrUrl, { errorCorrectionLevel: "M", margin: 1, width: 440 }).then(setQr);
@@ -95,7 +96,7 @@ export function LoginView() {
           <div className="rounded-2xl bg-white p-3 shadow">
             <img src={qr} width={220} height={220} alt="QR" />
           </div>
-          <p className="text-[13px] text-secondary">เปิด LINE บนโทรศัพท์ แล้วสแกน QR นี้</p>
+          <p className="text-[13px] text-secondary">{isIOS ? "แสดง QR นี้บนอีกหน้าจอ แล้วใช้ LINE สแกน" : "เปิด LINE บนโทรศัพท์ แล้วสแกน QR นี้"}</p>
         </motion.div>
       )}
       {s?.pin && (

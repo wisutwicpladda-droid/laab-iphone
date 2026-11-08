@@ -1,3 +1,5 @@
+import { isIOS } from "../lib/platform";
+import { closeChat } from "../lib/nav";
 import { ForwardSheet } from "./ForwardSheet";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { listen } from "@tauri-apps/api/event";
@@ -125,18 +127,18 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
     );
   }
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className={`laab-layout flex h-full overflow-hidden ${chatId ? "has-chat" : ""}`}>
       <Rail />
       <div className="w-px bg-separator" />
       {/* No width animation: it reflowed the timeline every frame and made
           drag-resizing chase the cursor. */}
       <div
         style={folded && !frame ? undefined : { width: frame?.list ?? width }}
-        className={`relative h-full overflow-hidden ${folded && !frame ? "min-w-0 flex-1" : "shrink-0"} ${frame ? "[contain:strict]" : ""}`}
+        className={`laab-chat-list relative h-full overflow-hidden ${folded && !frame ? "min-w-0 flex-1" : "shrink-0"} ${frame ? "[contain:strict]" : ""}`}
       >
         {page === "friends" ? <FriendsPage /> : page === "add" ? <AddFriendPage /> : <ChatListColumn selected={chatId} />}
       </div>
-      <div className="relative w-px shrink-0 bg-separator">
+      <div className="laab-divider relative w-px shrink-0 bg-separator">
         {!folded && !frame && <ResizeHandle width={width} />}
         <button
           title={folded ? "แสดงแชท" : "ซ่อนแชท"}
@@ -150,11 +152,14 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
         </button>
       </div>
       <main
-        className={folded ? "hidden" : frame ? "h-full shrink-0 [contain:strict]" : "min-w-0 flex-1"}
+        className={isIOS ? "laab-conversation min-w-0 flex-1" : folded ? "hidden" : frame ? "h-full shrink-0 [contain:strict]" : "min-w-0 flex-1"}
         style={frame && !folded ? { width: frame.chat } : undefined}
       >
         {chatId ? (
-          <ChatView key={chatId} chatId={chatId} main />
+          <>
+            {isIOS && <button className="mobile-back" onClick={closeChat}>‹ แชททั้งหมด</button>}
+            <ChatView key={chatId} chatId={chatId} main />
+          </>
         ) : (
           <div className="drag flex h-full flex-col items-center justify-center gap-3 text-secondary" data-tauri-drag-region>
             <BubblesIcon size={52} />

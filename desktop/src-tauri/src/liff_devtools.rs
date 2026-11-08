@@ -4,6 +4,7 @@
 //! LIFF pages are remote and get no IPC. `CAPTURE` keeps their log in a
 //! buffer inside the page; a poller drains it with `eval_with_callback`.
 
+use crate::platform::DesktopChrome;
 use std::sync::{LazyLock, Mutex};
 use std::time::Duration;
 
@@ -259,8 +260,7 @@ pub fn open(app: &AppHandle, focus: Option<&str>) -> tauri::Result<()> {
         .title("LIFF DevTools")
         .inner_size(960.0, 620.0)
         .min_inner_size(640.0, 360.0)
-        .title_bar_style(tauri::TitleBarStyle::Overlay)
-        .hidden_title(true)
+        .desktop_chrome()
         .build()?;
     }
     if let Some(label) = focus {

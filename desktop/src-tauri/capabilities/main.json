@@ -8,5 +8,10 @@
   "permissions": [
     "updater:default",
     "process:allow-restart"
+  ],
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
   ]
 }

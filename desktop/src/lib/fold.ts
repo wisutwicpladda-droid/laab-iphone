@@ -1,3 +1,4 @@
+import { isIOS } from "./platform";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { setUi, ui } from "./ui";
@@ -52,6 +53,7 @@ export async function foldChat(rail: number, list: number) {
  *  so one closed while folded opens narrower than the unfolded minimum. Open
  *  it folded too. */
 export function foldIfNarrow() {
+  if (isIOS) return;
   if (window.innerWidth < MIN_WIDTH) setUi({ chatFolded: true });
 }
 
@@ -65,6 +67,7 @@ function openedFolded() {
 /** Bring the conversation pane back: lay it out at its final width first,
  *  then slide the window open over it. */
 export async function unfoldChat() {
+  if (isIOS) return;
   if (!ui.state.chatFolded) return;
   const was = before ?? openedFolded();
   before = null;

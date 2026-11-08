@@ -20,6 +20,7 @@ mod media;
 mod model;
 mod notify;
 mod paths;
+mod platform;
 mod preview;
 mod probe;
 mod reads;
@@ -151,18 +152,18 @@ pub fn run() {
     tracing::info!("LAAB starting");
     let demo = std::env::args().any(|a| a == "--demo") || std::env::var_os("LAAB_DEMO").is_some();
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(desktop)]
+    let builder = builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_window_state::Builder::new().with_denylist(&[]).build());
+
+    builder
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
-        .plugin(
-            tauri_plugin_window_state::Builder::new()
-                .with_denylist(&[])
-                .build(),
-        )
         .register_asynchronous_uri_scheme_protocol("media", |ctx, request, responder| {
             let state = ctx.app_handle().state::<Arc<AppState>>().inner().clone();
             tauri::async_runtime::spawn(async move {
@@ -170,6 +171,9 @@ pub fn run() {
             });
         })
         .setup(move |app| {
+            #[cfg(target_os = "ios")]
+            let paths = paths::Paths::resolve_in(if demo { app.path().app_data_dir()?.join("demo") } else { app.path().app_data_dir()? }, demo)?;
+            #[cfg(not(target_os = "ios"))]
             let paths = paths::Paths::resolve(demo)?;
             logfile::start(&paths.root);
             crash::install(&paths.root);
@@ -186,6 +190,7 @@ pub fn run() {
             let state = AppState::new(app.handle().clone(), paths, demo, store);
             app.manage(state.clone());
             analytics::startup(&state);
+            #[cfg(desktop)]
             mcp::start(&state);
             if SET_ASIDE.load(std::sync::atomic::Ordering::Relaxed) {
                 analytics::failed(&state, analytics::Failure::DatabaseUnreadable, "");

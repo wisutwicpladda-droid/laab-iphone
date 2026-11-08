@@ -1,0 +1,111 @@
+name: iPhone build
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Build a simulator app, or a signed IPA for App Store Connect
+        type: choice
+        options: [simulator, signed-ipa]
+        default: simulator
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: desktop
+    env:
+      CI: true
+      # Do not use a Homebrew OpenSSL built for macOS in an iOS binary.
+      OPENSSL_NO_VENDOR: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: desktop/pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+      - name: Install Xcode project generator
+        run: brew install xcodegen
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+      - name: Test Rust on macOS
+        run: cargo test --lib
+        working-directory: desktop/src-tauri
+      - name: Check native iOS library
+        run: cargo check --lib --target aarch64-apple-ios-sim
+        working-directory: desktop/src-tauri
+      - name: Configure signing identity
+        if: inputs.package == 'signed-ipa'
+        env:
+          IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID }}
+          APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          required = ['IOS_BUNDLE_ID', 'APPLE_DEVELOPMENT_TEAM', 'APPLE_API_ISSUER', 'APPLE_API_KEY', 'APPLE_API_PRIVATE_KEY']
+          missing = [k for k in required if not os.environ.get(k)]
+          if missing:
+              raise SystemExit('Missing repository variables/secrets: ' + ', '.join(missing))
+          p = pathlib.Path('src-tauri/tauri.ios.conf.json')
+          config = json.loads(p.read_text())
+          config['identifier'] = os.environ['IOS_BUNDLE_ID']
+          config['bundle']['iOS']['developmentTeam'] = os.environ['APPLE_DEVELOPMENT_TEAM']
+          p.write_text(json.dumps(config))
+          key = pathlib.Path(os.environ['RUNNER_TEMP']) / 'AuthKey.p8'
+          key.write_text(os.environ['APPLE_API_PRIVATE_KEY'])
+          key.chmod(0o600)
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('APPLE_API_KEY_PATH=' + str(key) + '\n')
+          PY
+      - name: Generate native iOS project
+        run: pnpm tauri ios init
+      - name: Build simulator app (cannot install on iPhone)
+        if: inputs.package == 'simulator'
+        run: pnpm tauri ios build --ci --target aarch64-sim -- CODE_SIGNING_ALLOWED=NO
+      - name: Build signed device IPA
+        if: inputs.package == 'signed-ipa'
+        env:
+          APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: pnpm tauri ios build --ci --target aarch64 --export-method app-store-connect --build-number "${GITHUB_RUN_NUMBER}"
+      - name: Pack simulator bundle
+        if: inputs.package == 'simulator'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          apps = list(Path('src-tauri/gen/apple/build').rglob('*.app'))
+          if not apps:
+              raise SystemExit('No simulator .app found')
+          subprocess.run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', str(apps[0]), 'laab-simulator.zip'], check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laab-ios-${{ inputs.package }}
+          if-no-files-found: error
+          path: |
+            desktop/laab-simulator.zip
+            desktop/src-tauri/gen/apple/build/**/*.ipa
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"

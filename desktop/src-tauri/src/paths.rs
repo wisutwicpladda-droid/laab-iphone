@@ -27,6 +27,11 @@ impl Paths {
 
     pub fn resolve(demo: bool) -> Result<Self> {
         let root = Self::root_for(demo)?;
+        Self::resolve_in(root, demo)
+    }
+
+    /// Tauri supplies the app's sandbox on iOS.
+    pub fn resolve_in(root: PathBuf, demo: bool) -> Result<Self> {
         if demo {
             let _ = fs::remove_dir_all(&root);
         }

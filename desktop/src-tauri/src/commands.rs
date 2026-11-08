@@ -1,5 +1,6 @@
 //! Tauri commands called by the React frontend.
 
+use crate::platform::DesktopChrome;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -1175,6 +1176,13 @@ pub async fn liff_share(
 /// Open a chat in its own window.
 #[tauri::command]
 pub fn open_chat_window(app: tauri::AppHandle, chat_id: String, title: String) -> R<()> {
+    #[cfg(mobile)]
+    {
+        crate::show_in_main(&app, &chat_id, None);
+        return Ok(());
+    }
+    #[cfg(desktop)]
+    {
     let label = format!("chat-{}", crate::media::safe_name(&chat_id));
     if let Some(w) = app.get_webview_window(&label) {
         return w.set_focus().map_err(err);
@@ -1187,11 +1195,11 @@ pub fn open_chat_window(app: tauri::AppHandle, chat_id: String, title: String) -
     .title(title)
     .inner_size(460.0, 760.0)
     .min_inner_size(420.0, 420.0)
-    .title_bar_style(tauri::TitleBarStyle::Overlay)
-    .hidden_title(true)
+    .desktop_chrome()
     .build()
     .map_err(err)?;
     Ok(())
+    }
 }
 
 #[tauri::command]
@@ -1262,7 +1270,10 @@ fn inside_data(state: &AppState, path: &str) -> R<std::path::PathBuf> {
 pub fn open_path(state: S<'_>, path: String) -> R<()> {
     let p = inside_data(&state, &path)?;
     let plain = crate::cache::plain_copy(&p).map_err(err)?;
-    tauri_plugin_opener::open_path(plain, None::<&str>).map_err(err)
+    {
+        use tauri_plugin_opener::OpenerExt;
+        state.app.opener().open_path(plain.to_string_lossy(), None::<&str>).map_err(err)
+    }
 }
 
 /// Show an attachment in Finder. An encrypted cache file means nothing in
@@ -1935,6 +1946,14 @@ pub fn open_aux_window(
     tab: Option<String>,
     post: Option<String>,
 ) -> R<()> {
+    #[cfg(mobile)]
+    {
+        use tauri::Emitter;
+        let route = aux_route(&kind, &chat_id, tab, post, now_ms() as u64);
+        return app.emit("mobile-route", route).map_err(err);
+    }
+    #[cfg(desktop)]
+    {
     let label = format!(
         "aux-{}-{}",
         crate::media::safe_name(&kind),
@@ -1961,11 +1980,11 @@ pub fn open_aux_window(
     .title(title)
     .inner_size(w, h)
     .min_inner_size(300.0, 400.0)
-    .title_bar_style(tauri::TitleBarStyle::Overlay)
-    .hidden_title(true)
+    .desktop_chrome()
     .build()
     .map_err(err)?;
     Ok(())
+    }
 }
 
 /// The page of history before the oldest stored message; 0 at its start.
@@ -1983,6 +2002,10 @@ pub async fn older_messages(state: S<'_>, chat_id: String) -> R<usize> {
 pub fn open_viewer(app: tauri::AppHandle, state: S<'_>, payload: serde_json::Value) -> R<()> {
     use tauri::Emitter;
     *state.viewer.lock().unwrap_or_else(|e| e.into_inner()) = payload.clone();
+    #[cfg(mobile)]
+    { return app.emit("mobile-route", "/viewer").map_err(err); }
+    #[cfg(desktop)]
+    {
     if let Some(w) = app.get_webview_window("viewer") {
         w.emit("viewer-show", payload).map_err(err)?;
         let _ = w.unminimize();
@@ -1997,6 +2020,7 @@ pub fn open_viewer(app: tauri::AppHandle, state: S<'_>, payload: serde_json::Val
         .build()
         .map_err(err)?;
     Ok(())
+    }
 }
 
 /// The viewer's "›" next to the date: show that message in the main window.

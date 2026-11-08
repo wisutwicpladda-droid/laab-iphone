@@ -1,0 +1,17 @@
+{
+  "identifier": "desktop-state",
+  "windows": [
+    "main",
+    "chat-*",
+    "aux-*",
+    "viewer"
+  ],
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
+  ],
+  "permissions": [
+    "window-state:default"
+  ]
+}

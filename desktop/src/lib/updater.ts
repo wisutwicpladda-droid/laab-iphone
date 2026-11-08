@@ -1,3 +1,4 @@
+import { isIOS } from "./platform";
 import { getVersion } from "@tauri-apps/api/app";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
@@ -36,7 +37,7 @@ function checkShared() {
  *  and downloads a newer version in the background. Failures (offline,
  *  GitHub down) wait for the next check. Dev builds don't check. */
 export function startUpdateChecks() {
-  if (import.meta.env.DEV || started) return;
+  if (isIOS || import.meta.env.DEV || started) return;
   started = true;
   const run = () => checkShared().catch(() => {});
   run();
@@ -49,6 +50,7 @@ export function startUpdateChecks() {
 /** "Check for updates" in the menu. `say` gets each line for the status bar.
  *  A newer version shows up in the update bar once it has downloaded. */
 export async function checkNow(say: (line: string) => void) {
+  if (isIOS) return say("อัปเดตผ่านช่องทางที่ใช้ติดตั้งแอป เช่น TestFlight");
   if (import.meta.env.DEV) return say("รุ่นพัฒนาไม่ตรวจหาอัปเดต");
   say("กำลังตรวจหาอัปเดต…");
   onFound = (v) => say(`กำลังดาวน์โหลด LAAB ${v}…`);

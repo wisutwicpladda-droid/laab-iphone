@@ -1,4 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
+import { isIOS } from "../lib/platform";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { api, errorText } from "../lib/api";
@@ -306,6 +307,7 @@ export const Composer = forwardRef<
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+    if (isIOS && e.key === "Enter" && !e.metaKey && !e.ctrlKey) return;
     const plain = !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey;
     const silent = e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey;
     if (pendingImage && !(pickerOpen && candidates.length) && e.key === "Enter" && (plain || silent || (e.metaKey && !e.shiftKey))) {
@@ -503,7 +505,7 @@ export const Composer = forwardRef<
       </div>
       {/* LINE for Mac: 📎 on the left, 🙂 (stickers) on the right, no send
           button; Return sends. */}
-      <div className="mt-7 flex items-center gap-1 text-secondary dark:text-[#c0c0c0]">
+      <div className="composer-tools mt-7 flex items-center gap-1 text-secondary dark:text-[#c0c0c0]">
         <button
           title="แนบไฟล์"
           disabled={disabled}
@@ -517,7 +519,7 @@ export const Composer = forwardRef<
             no button, so this line is how people find it. */}
         <span
           aria-hidden
-          className={`mr-2 flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] whitespace-nowrap text-secondary transition-opacity duration-150 ${
+          className={`desktop-send-hint mr-2 flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] whitespace-nowrap text-secondary transition-opacity duration-150 ${
             (text.trim() || pendingImage) && mode?.kind !== "edit" ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -532,6 +534,7 @@ export const Composer = forwardRef<
         >
           <SmileIcon size={23} strokeWidth={1.5} />
         </button>
+        {isIOS && <button type="button" className="mobile-send" disabled={disabled || sending || (!text.trim() && !pendingImage)} onClick={() => void send(false)}>ส่ง</button>}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { isIOS } from "../lib/platform";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -233,7 +234,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
     <div className="relative flex h-full flex-col bg-chat">
       {/* LINE for Mac: the header sits under a title-bar strip, level with
           the chat list's search box. */}
-      <div className="drag h-[56px] shrink-0" data-tauri-drag-region />
+      <div className="desktop-title-space drag h-[56px] shrink-0" data-tauri-drag-region />
       <header className="drag flex h-[56px] shrink-0 items-center gap-1.5 px-4" data-tauri-drag-region>
         <h2 className="truncate text-[15px] font-semibold">{isKeepMemo({ id: chatId }, me) ? "Keep Memo" : title}</h2>
         {group && chat?.memberCount ? <span className="text-[15px] font-semibold">({chat.memberCount})</span> : null}
@@ -246,7 +247,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
             {chat.muted ? <BellSlashIcon size={13} /> : <SpeakerIcon size={15} />}
           </button>
         )}
-        {main && (
+        {main && !isIOS && (
           <button
             title="เปิดในหน้าต่างใหม่"
             onClick={() => api.openChatWindow(chatId, title)}
