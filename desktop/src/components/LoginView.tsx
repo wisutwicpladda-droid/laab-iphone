@@ -132,7 +132,9 @@ export function LoginView() {
           <p className="text-[13px] text-secondary">ใส่รหัสนี้ใน LINE บนโทรศัพท์</p>
         </motion.div>
       )}
-      {!qr && !s?.pin && (
+      {/* iPhone signs in as an Android secondary device, which LINE only
+          lets in by QR (a password login is refused with x-lc 400). */}
+      {!qr && !s?.pin && !isIOS && (
         <button
           className="text-[12.5px] text-secondary underline hover:text-primary"
           onClick={() => setMethod(method === "qr" ? "password" : "qr")}
