@@ -2,12 +2,13 @@ import { Menu } from "@base-ui/react/menu";
 import { useQuery } from "@tanstack/react-query";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open as openDialog, save } from "@tauri-apps/plugin-dialog";
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { api, errorText, mediaUrl, q, queryClient } from "../lib/api";
 import { copyImage } from "../lib/clipboardImage";
 import { performFlexAction } from "../lib/flexActions";
 import { callBubbleLabel, isBlank, noticeFor, readCall } from "../lib/notices";
-import { nextReaction } from "../lib/reactions";
+import { nextReaction, REACTIONS } from "../lib/reactions";
+import { isIOS } from "../lib/platform";
 import { bigSticonSize, isAnimated, sticons } from "../lib/media";
 import { clock } from "../lib/time";
 import { setTranslateTarget, translateLanguages, translateTarget } from "../lib/translate";
@@ -17,7 +18,7 @@ import { openUrl } from "../lib/open";
 import { viewMessage } from "../lib/viewer";
 import { Avatar } from "./Avatar";
 import { FlexCard, parseFlex } from "./FlexCard";
-import { DocIcon, PhoneIcon, PhotoIcon, PlayIcon, VideoIcon } from "./Icons";
+import { DocIcon, PauseIcon, PhoneIcon, PhotoIcon, PlayIcon, VideoIcon } from "./Icons";
 import { Ctx, itemClass, pressable, Separator, Spinner } from "./kit";
 import { Popover } from "./Popover";
 import { ReactButton, ReactionBadge } from "./Reactions";
@@ -425,7 +426,9 @@ function Content({
     case "POSTNOTIFICATION":
       return <PostNotice m={m} tail={tail} chatId={ctx.chatId} />;
     case "AUDIO":
-      return (
+      return isIOS ? (
+        <VoiceBubble m={m} src={mediaUrl.message(ctx.chatId, m.id, false)} tail={tail} />
+      ) : (
         <Bubble mine={m.mine} tail={tail}>
           <audio controls preload="none" src={mediaUrl.message(ctx.chatId, m.id, false)} className="h-8 w-56" />
         </Bubble>
@@ -482,7 +485,47 @@ function copyable(m: Message) {
 
 /** LINE for Mac's message menu, in its order. Items LAAB cannot do (แชร์)
  *  are left out. รายงานปัญหา reports to LAAB, not to LINE. */
-function rowMenu(m: Message, dev: boolean, ctx?: RowContext) {
+const clipTime = (ms: number) => {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
+/** LINE for iPhone's voice message: ▶ and the clip's length; the bubble
+ *  grows a little with longer clips. */
+function VoiceBubble({ m, src, tail }: { m: Message; src: string; tail: boolean }) {
+  const audio = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [at, setAt] = useState(0);
+  const [total, setTotal] = useState(m.durationMs ?? 0);
+  const toggle = () => {
+    const a = audio.current;
+    if (!a) return;
+    if (a.paused) a.play().catch((e) => notice(`เล่นเสียงไม่ได้: ${errorText(e)}`));
+    else a.pause();
+  };
+  return (
+    <Bubble mine={m.mine} tail={tail}>
+      <div className="flex items-center gap-2.5" style={{ minWidth: 92 + Math.min(110, (total / 1000) * 3) }}>
+        <button type="button" aria-label={playing ? "หยุดเสียง" : "เล่นข้อความเสียง"} onClick={toggle} className="grid h-7 w-7 shrink-0 place-items-center">
+          {playing ? <PauseIcon size={20} /> : <PlayIcon size={20} />}
+        </button>
+        <span className="text-[15px] tabular-nums">{clipTime(playing || at > 0 ? at : total)}</span>
+        <audio
+          ref={audio}
+          preload="none"
+          src={src}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => (setPlaying(false), setAt(0))}
+          onTimeUpdate={(e) => setAt(e.currentTarget.currentTime * 1000)}
+          onLoadedMetadata={(e) => Number.isFinite(e.currentTarget.duration) && !total && setTotal(e.currentTarget.duration * 1000)}
+        />
+      </div>
+    </Bubble>
+  );
+}
+
+function rowMenu(m: Message, dev: boolean, ctx?: RowContext, reaction?: { mine?: ReactionName; pick: (r: ReactionName) => void }) {
   const flexAlt = m.contentType === "FLEX" ? m.metadata.ALT_TEXT : null;
   const copyText =
     flexAlt ||
@@ -506,6 +549,24 @@ function rowMenu(m: Message, dev: boolean, ctx?: RowContext) {
   const canEdit = queryClient.getQueryData(q.session.queryKey)?.premium !== false;
   return (
     <>
+      {isIOS && reaction && live && ctx.signedIn && (
+        // LINE for iPhone: a long press offers the reactions above the actions.
+        <>
+          <div className="flex justify-between gap-0.5 px-2 pb-1.5" aria-label="รีแอคชัน">
+            {REACTIONS.map((r) => (
+              <Menu.Item
+                key={r.name}
+                aria-label={`รีแอคชัน ${r.name}`}
+                onClick={() => reaction.pick(r.name)}
+                className={`grid h-[42px] w-[42px] place-items-center rounded-full text-[26px] outline-none data-highlighted:bg-menu-hover ${reaction.mine === r.name ? "bg-menu-hover" : ""}`}
+              >
+                {r.emoji}
+              </Menu.Item>
+            ))}
+          </div>
+          <Separator />
+        </>
+      )}
       {live && item("ตอบกลับ", () => setUi({ composerMode: { chatId: ctx.chatId, kind: "reply", message: m }, composerFocus: Date.now() }))}
       {item(
         "คัดลอก",
@@ -675,7 +736,7 @@ export const MessageRow = memo(function MessageRow({
     // min-w-0: a reply quote is one truncated line, and without it the
     // bubble keeps that whole line's width and pushes the row past the view.
     <div className="relative min-w-0">
-      <Ctx menu={rowMenu(m, dev, ctx)}>
+      <Ctx menu={rowMenu(m, dev, ctx, { mine: myReaction, pick: react })}>
         {photos && photos.length > 1 ? (
           <PhotoGrid photos={photos} ctx={ctx} />
         ) : (
