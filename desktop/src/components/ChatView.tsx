@@ -81,7 +81,9 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
   const [unreadFrom, setUnreadFrom] = useState<string | null>(null);
   const me = session?.profile?.mid ?? "";
   const signedIn = session?.state === "signed_in";
-  const stealth = useUi((s) => s.stealthRead);
+  // Stealth reading everywhere, or for this chat opened with "แอบอ่าน".
+  const stealth = useUi((s) => s.stealthRead || s.peekChat === chatId);
+  const quiet = () => ui.state.stealthRead || ui.state.peekChat === chatId;
 
   // Tell the backend what is on screen right away; fetch after the user
   // settles on a chat for 150 ms, so arrow-key browsing stays fast.
@@ -91,7 +93,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
     setUnreadFrom(null);
     const t = setTimeout(() => {
       api
-        .openChat(chatId, ui.state.stealthRead)
+        .openChat(chatId, quiet())
         .then((first) => {
           if (!cancelled) setUnreadFrom(first);
         })
@@ -108,7 +110,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
     if (!main) return;
     const off = listen<boolean>("app-active", (e) => {
       api.setFocus(chatId, e.payload);
-      if (e.payload && !ui.state.stealthRead) api.markRead(chatId).catch(() => {});
+      if (e.payload && !quiet()) api.markRead(chatId).catch(() => {});
     });
     return () => {
       off.then((f) => f());

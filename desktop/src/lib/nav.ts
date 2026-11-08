@@ -4,13 +4,16 @@ import { unfoldChat } from "./fold";
 import { LAST_CHAT_KEY, notice, setUi } from "./ui";
 
 /** Open a chat in the main window, optionally scrolled to a message. Unfolds
- *  the conversation pane if it was folded. */
-export function openChat(chatId: string, opts: { messageId?: string | null; focusComposer?: boolean } = {}) {
-  setUi({ focusMessageId: opts.messageId ?? null, searchOpen: false });
+ *  the conversation pane if it was folded. `peek`: stealth reading for this
+ *  opening only; the chat is not reopened at the next launch, which would
+ *  mark it read. */
+export function openChat(chatId: string, opts: { messageId?: string | null; focusComposer?: boolean; peek?: boolean } = {}) {
+  setUi({ focusMessageId: opts.messageId ?? null, searchOpen: false, peekChat: opts.peek ? chatId : null });
   unfoldChat().catch((e) => notice(errorText(e)));
-  localStorage.setItem(LAST_CHAT_KEY, chatId);
+  if (opts.peek) localStorage.removeItem(LAST_CHAT_KEY);
+  else localStorage.setItem(LAST_CHAT_KEY, chatId);
   router.navigate({ to: "/chat/$chatId", params: { chatId } });
-  if (opts.focusComposer !== false) setUi({ composerFocus: Date.now() });
+  if (opts.focusComposer !== false && !opts.peek) setUi({ composerFocus: Date.now() });
 }
 
 /** Escape with nothing else open closes the chat. */

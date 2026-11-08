@@ -79,6 +79,8 @@ export interface UiState {
   chatsSegment: "chats" | "friends";
   /** Stealth reading: open chats without telling LINE they were read. */
   stealthRead: boolean;
+  /** A chat opened with "แอบอ่าน" from its menu: read quietly this time only. */
+  peekChat: string | null;
   /** When this app last sent a message; that message scrolls the chat down. */
   sentAt: number;
   /** The announcement list over the chat is open. */
@@ -115,6 +117,7 @@ export const ui = createStore<UiState>({
   railPage: "chats",
   chatsSegment: "chats",
   stealthRead: saved("stealthRead", false),
+  peekChat: null,
   composerMode: null,
   forwarding: null,
   translations: {},

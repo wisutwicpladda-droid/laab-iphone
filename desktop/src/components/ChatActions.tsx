@@ -3,6 +3,8 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { api, errorText, messageLimit, useChatList, usePeople } from "../lib/api";
 import { folderName, folderOf, isGroup } from "../lib/chatList";
 import { closeChat } from "../lib/nav";
+import { openChat } from "../lib/nav";
+import { isIOS } from "../lib/platform";
 import { clock, dayHeader } from "../lib/time";
 import type { Chat } from "../lib/types";
 import { notice, setUi } from "../lib/ui";
@@ -73,7 +75,8 @@ export function ChatActions({ chat }: { chat: Chat }) {
   const pinned = list?.pins.main?.includes(chat.id) ?? false;
   return (
     <>
-      <Item onClick={() => run(api.openChatWindow(chat.id, chat.name))}>เปิดในหน้าต่างใหม่</Item>
+      <Item onClick={() => openChat(chat.id, { peek: true })}>แอบอ่าน (อีกฝ่ายไม่เห็นว่าอ่าน)</Item>
+      {!isIOS && <Item onClick={() => run(api.openChatWindow(chat.id, chat.name))}>เปิดในหน้าต่างใหม่</Item>}
       <Separator />
       <Item onClick={() => run(api.setPinned(chat.id, "main", !pinned))}>{pinned ? "เลิกปักหมุด" : "ปักหมุด"}</Item>
       <Item onClick={() => run(api.hideChat(chat.id))}>ซ่อน</Item>
