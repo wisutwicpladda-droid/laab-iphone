@@ -36,6 +36,11 @@ run('xcrun', 'simctl', 'bootstatus', udid, '-b')
 # Keychain access must be checked with the actual device signing profile.
 run('codesign', '--force', '--sign', '-', app)
 run('xcrun', 'simctl', 'install', udid, app)
+# The demo's voice check records a moment of audio; allow the microphone.
+try:
+    run('xcrun', 'simctl', 'privacy', udid, 'grant', 'microphone', identifier, timeout=30)
+except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+    (out / 'mic-grant-error.txt').write_text(type(error).__name__)
 env = dict(os.environ, SIMCTL_CHILD_LAAB_DEMO='1', SIMCTL_CHILD_RUST_BACKTRACE='1', SIMCTL_CHILD_RUST_LOG='laab_lib=debug,line_rs=warn')
 with (out / 'console.log').open('w') as log:
     process = subprocess.Popen(['xcrun', 'simctl', 'launch', '--console', '--terminate-running-process', udid, identifier], stdout=log, stderr=subprocess.STDOUT, env=env)
