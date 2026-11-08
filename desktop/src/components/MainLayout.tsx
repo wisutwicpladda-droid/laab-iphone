@@ -18,6 +18,7 @@ import { FolderDialog } from "./FolderDialog";
 import { BubblesIcon, ChevronIcon } from "./Icons";
 import { LiffConsent, SharePicker } from "./LiffDialogs";
 import { AddFriendPage, FriendsPage } from "./ListPages";
+import { MorePage } from "./MorePage";
 import { LoginView } from "./LoginView";
 import { Rail } from "./Rail";
 import { ProfileSheet } from "./ProfileSheet";
@@ -157,6 +158,8 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
           <FriendsPage />
         ) : page === "add" ? (
           <AddFriendPage />
+        ) : page === "more" && isIOS ? (
+          <MorePage />
         ) : isIOS && segment === "friends" ? (
           <FriendsPage segment />
         ) : (

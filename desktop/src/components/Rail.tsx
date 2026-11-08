@@ -107,6 +107,12 @@ export function Rail() {
       <RailButton title="Keep Memo" className="rail-keep" disabled={!me} onClick={() => me && (setUi({ railPage: "chats" }), openChat(me))}>
         <BookmarkIcon size={21} />
       </RailButton>
+      {isIOS ? (
+        // LINE for iPhone: the last tab opens settings as a page.
+        <RailButton title="อื่นๆ" active={page === "more"} onClick={() => setUi({ railPage: "more" })}>
+          <MoreIcon size={20} />
+        </RailButton>
+      ) : (
       <Menu.Root onOpenChange={setMenuOpen}>
         <Menu.Trigger
           aria-label="เมนู"
@@ -182,6 +188,7 @@ export function Rail() {
           </Menu.Positioner>
         </Menu.Portal>
       </Menu.Root>
+      )}
     </div>
   );
 }

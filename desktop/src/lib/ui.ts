@@ -74,7 +74,7 @@ export interface UiState {
   /** Someone's profile card; name and picture show while it loads. */
   profile: { mid: string; name?: string; picture?: string | null } | null;
   /** What the column next to the left bar shows: chats, friends, add friend. */
-  railPage: "chats" | "friends" | "add";
+  railPage: "chats" | "friends" | "add" | "more";
   /** iPhone: the "แชท | เพื่อน" switch at the top of the chats tab. */
   chatsSegment: "chats" | "friends";
   /** Stealth reading: open chats without telling LINE they were read. */
