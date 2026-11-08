@@ -29,6 +29,7 @@ import {
   SortIcon,
 } from "./Icons";
 import { Badge, Ctx, CtxItem, itemClass, popupClass, Separator, Spinner } from "./kit";
+import { StealthNotice } from "./Stealth";
 
 export function ChatListColumn({ selected }: { selected: string | null }) {
   const list = useChatList();
@@ -120,6 +121,7 @@ export function ChatListColumn({ selected }: { selected: string | null }) {
         </label>
         {!query && !isIOS && <SortMenu />}
       </div>
+      <StealthNotice />
       {list && !query.trim() && <RequestBoxEntry list={list} filter={filter} />}
       <div className="relative min-h-0 flex-1">
         <div

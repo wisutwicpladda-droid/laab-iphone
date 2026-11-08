@@ -8,6 +8,7 @@ import type { Chat } from "../lib/types";
 import { notice, setUi } from "../lib/ui";
 import { itemClass, popupClass, Separator } from "./kit";
 import { LockIcon } from "./Icons";
+import { StealthMenuItem } from "./Stealth";
 
 const run = (p: Promise<unknown>, done?: string) => p.then(() => done && notice(done)).catch((e) => notice(errorText(e)));
 
@@ -141,6 +142,8 @@ export function HeaderMenu({ chat, secure }: { chat: Chat; secure: boolean }) {
   const name = (mid: string) => list?.chats.find((c) => c.id === mid)?.name ?? people[mid]?.name ?? "สมาชิก";
   return (
     <>
+      <StealthMenuItem />
+      <Separator />
       <Item onClick={() => run(api.setMuted(chat.id, !chat.muted))}>{chat.muted ? "เปิดแจ้งเตือน" : "ปิดแจ้งเตือน"}</Item>
       <Separator />
       {group && !chat.invited && <Item onClick={() => setUi({ sheet: { kind: "group-members", chatId: chat.id } })}>สมาชิก</Item>}

@@ -10,6 +10,7 @@ import { checkNow } from "../lib/updater";
 import { isIOS } from "../lib/platform";
 import { BookmarkIcon, BubbleIcon, CalendarIcon, HomeIcon, MoreIcon, PersonIcon, PersonPlusIcon } from "./Icons";
 import { itemClass, popupClass, Separator } from "./kit";
+import { StealthMenuItem } from "./Stealth";
 
 function RailButton({
   title,
@@ -122,13 +123,11 @@ export function Rail() {
                 <div>{session?.status}</div>
               </div>
               <Separator />
+              <StealthMenuItem />
+              <Separator />
               <Menu.Item className={itemClass} disabled={!signedIn} onClick={sync}>
                 รีเฟรชแชท
               </Menu.Item>
-              <Menu.CheckboxItem className={itemClass} checked={stealth} onCheckedChange={(v) => setUi({ stealthRead: v })}>
-                <span className="w-4 text-center">{stealth ? "✓" : ""}</span>
-                แอบอ่าน (ไม่ส่งว่าอ่านแล้ว)
-              </Menu.CheckboxItem>
               <Menu.CheckboxItem className={itemClass} checked={dev} onCheckedChange={(v) => setUi({ developerMode: v })}>
                 <span className="w-4 text-center">{dev ? "✓" : ""}</span>
                 เครื่องมือนักพัฒนา
