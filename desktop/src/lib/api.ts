@@ -272,13 +272,28 @@ export const usePeople = () => useQuery(q.people).data ?? {};
 /** Backend events invalidate the matching queries. */
 export function useBackendEvents() {
   useEffect(() => {
+    // A sync changes chats many times a second; refetching the list (and
+    // re-rendering it) for each one made the app stutter. Refetch at most
+    // every 400 ms, always once after the last change.
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let last = 0;
+    const refetchChats = () => {
+      last = Date.now();
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+    };
+    const chatsChanged = () => {
+      if (timer) return;
+      const wait = Math.max(0, last + 400 - Date.now());
+      timer = setTimeout(() => {
+        timer = null;
+        refetchChats();
+      }, wait);
+    };
     const offs = [
       listen<Session>("session", (e) => queryClient.setQueryData(["session"], track(e.payload))),
-      listen("chats-changed", () => {
-        queryClient.invalidateQueries({ queryKey: ["chats"] });
-        queryClient.invalidateQueries({ queryKey: ["people"] });
-        queryClient.invalidateQueries({ queryKey: ["friends"] });
-      }),
+      listen("chats-changed", chatsChanged),
       listen<{ chatId: string }>("messages-changed", (e) => queryClient.invalidateQueries({ queryKey: ["messages", e.payload.chatId] })),
       listen("mcp-changed", () => {
         queryClient.invalidateQueries({ queryKey: ["mcp"] });
@@ -295,7 +310,10 @@ export function useBackendEvents() {
         queryClient.invalidateQueries({ queryKey: ["people"] });
       }),
     ];
-    return () => offs.forEach((p) => p.then((off) => off()));
+    return () => {
+      if (timer) clearTimeout(timer);
+      offs.forEach((p) => p.then((off) => off()));
+    };
   }, []);
 }
 

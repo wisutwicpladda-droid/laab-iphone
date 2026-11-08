@@ -12,6 +12,10 @@ on:
         description: Run macOS Rust tests and iOS library check before simulator packaging
         type: boolean
         default: true
+      debug_build:
+        description: Build the device IPA unoptimized (faster to build, much slower to use)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -90,7 +94,12 @@ jobs:
         run: pnpm tauri ios build --ci --debug --target aarch64-sim --no-sign
       - name: Build device IPA for signing with a free Apple ID on Windows
         if: inputs.package == 'unsigned-ipa'
-        run: pnpm tauri ios build --ci --debug --target aarch64 --no-sign
+        # Optimized by default: a debug build makes the whole app sluggish.
+        # Thin LTO keeps the build inside the job's time limit.
+        env:
+          CARGO_PROFILE_RELEASE_LTO: thin
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
+        run: pnpm tauri ios build --ci ${{ inputs.debug_build && '--debug' || '' }} --target aarch64 --no-sign
       - name: Build signed device IPA
         if: inputs.package == 'signed-ipa'
         env:

@@ -173,20 +173,17 @@ body,
 .ios .has-chat .composer-root { padding-bottom: calc(7px + env(safe-area-inset-bottom)); }
 .ios.keyboard .has-chat .composer-root { padding-bottom: 7px; }
 .ios .ios-glass {
-  background: light-dark(rgba(242, 243, 245, 0.82), rgba(40, 40, 43, 0.78));
+  background: light-dark(rgba(242, 243, 245, 0.88), rgba(46, 46, 50, 0.82));
   border: 0.5px solid light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
 }
 .ios .laab-layout > [data-rail] {
   position: absolute; z-index: 30; left: 14px; right: 14px;
   bottom: max(6px, calc(env(safe-area-inset-bottom) - 12px));
   width: auto; height: 64px; padding: 5px; border-radius: 32px;
-  background: light-dark(rgba(248, 248, 250, 0.8), rgba(34, 34, 37, 0.8));
+  /* Nearly solid: a blur over the scrolling list redraws every frame. */
+  background: light-dark(rgba(248, 248, 250, 0.96), rgba(34, 34, 37, 0.96));
   border: 0.5px solid light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.1));
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
 }
 .ios .laab-chat-list .overflow-y-auto { padding-bottom: calc(max(6px, calc(env(safe-area-inset-bottom) - 12px)) + 76px); }
 .ios .laab-chat-list .ios-status {
