@@ -1,0 +1,31 @@
+name: Inspect built iPhone simulator app
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: Run ID containing laab-ios-simulator
+        type: string
+        required: true
+        default: '42478156811'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  launch:
+    runs-on: macos-15
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: laab-ios-simulator
+          run-id: ${{ inputs.build_run }}
+          github-token: ${{ github.token }}
+          path: simulator-artifact
+      - name: Inspect native startup and collect logs
+        run: python3 scripts/ios-smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-startup-diagnostics
+          path: ios-diagnostics
