@@ -18,3 +18,5 @@ update=Updates
 report=Report a problem
 stats=Usage statistics
 sticker=Stickers
+iphone=iPhone
+ios=iOS
