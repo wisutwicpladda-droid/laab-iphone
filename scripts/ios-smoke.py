@@ -57,10 +57,11 @@ with (out / 'console.log').open('w') as log:
             run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-iphone-dark.png').resolve(), timeout=60)
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
             (out / 'dark-screenshot-error.txt').write_text(type(error).__name__)
-        # The chat list too (the demo goes back to it 115 s after start), in
-        # dark then light mode.
+        # The chat list too (the demo goes back to it 115 s after start, and
+        # a cold start on a shared runner can take half a minute), in dark
+        # then light mode.
         try:
-            time.sleep(22)
+            time.sleep(50)
             run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-list-dark.png').resolve(), timeout=60)
             run('xcrun', 'simctl', 'ui', udid, 'appearance', 'light', timeout=30)
             time.sleep(4)
