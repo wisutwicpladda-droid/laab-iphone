@@ -1,0 +1,39 @@
+LAAB experimental iPhone port validation — 2026-11-08 (Asia/Bangkok)
+
+SOURCE: https://github.com/wisutwicpladda-droid/laab-iphone
+Upstream: 7ff7e65c005ac3274660e2e0cfaf9e5946c9339e
+
+PASS: pnpm build (TypeScript + Vite)
+PASS: pnpm test — 59 tests across 5 files
+PASS: cargo test --lib on cloud macOS — 129 tests
+PASS: native device IPA build on cloud macOS, unsigned ARM64 iOS debug build
+https://github.com/wisutwicpladda-droid/laab-iphone/actions/runs/42476363332
+PASS: downloaded IPA ZIP and Info.plist/Mach-O inspection:
+  iPhoneOS, ARM64, Mach-O build platform 2 (physical iOS), minimum iOS 15.0
+  Executable LAAB, bundle identifier tech.softnetics.laab, version 0.4.0
+  36,908,919 bytes
+  SHA256 ade357409bfd20c109875df1917a583890b3b8c5986112480c7122dbeb3536dd
+
+PASS: Playwright Chromium UI smoke, mocked Tauri IPC and iPhone user agent
+  URL: http://127.0.0.1:1420/ ; title LAAB
+  Browser plugin was not available; used Playwright CLI.
+  390x844: list -> conversation -> Send invokes mock IPC -> Back to list
+  390x500: Send remains visible; Return inserts newline
+  320x568: no horizontal page overflow
+  iPhone login defaults to email/password
+  Desktop 1100x720: list + conversation both remain visible
+  Meaningful screens, no framework error overlay, no uncaught JS errors
+  Expected browser-only console errors: unsupported native media:// URLs and
+  missing favicon.ico; these do not test the native media protocol.
+
+NATIVE SIMULATOR: pending run 42476591009
+https://github.com/wisutwicpladda-droid/laab-iphone/actions/runs/42476591009
+
+NOT TESTED: physical iPhone signing/install, real LINE login, sending/receiving
+on LINE, photos/files on a real device, actual iOS keyboard, background lifecycle.
+Push notifications/background sync are not implemented. LIFF/devtools and MCP
+still need mobile-specific behavior; see docs/IPHONE.md.
+
+The IPA is unsigned. Use a free Apple ID in Sideloadly on Windows (7-day signing)
+or arrange a signed distribution. It does not install by opening it in Safari.
+No Apple/LINE accounts or real chat data were accessed during this task.

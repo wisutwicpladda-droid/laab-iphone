@@ -1,6 +1,7 @@
 # iPhone port — implementation and installation
 
-This is an experimental source port, not a released or device-verified iOS app.
+This is an experimental iOS port with a cloud-built unsigned device IPA, not a
+physical-device-verified release.
 The upstream snapshot is recorded in `UPSTREAM_COMMIT.txt`.
 
 ## What changed
@@ -83,9 +84,17 @@ Choose your signing team and connected iPhone in Xcode. Use a unique bundle ID i
 
 ## Validation and limitations
 
-Local Windows validation is recorded in `VALIDATION.txt`. Neither Rust/iOS native
-compilation nor real LINE login has been verified here. There is no generated
-Xcode project or signed IPA in this source archive; the Mac workflow generates it.
+Validation is recorded in `VALIDATION.txt`. Cloud Mac tests pass (129 Rust tests),
+frontend checks pass (59 tests and production build), and a physical-device ARM64
+iOS IPA was built successfully by run 42476363332:
+https://github.com/wisutwicpladda-droid/laab-iphone/actions/runs/42476363332
+
+The unsigned IPA's Mach-O platform is iOS (not Simulator), supported platform is
+iPhoneOS, and minimum iOS version is 15.0. Native simulator launch validation is
+tracked separately in `VALIDATION.txt`. No physical iPhone or real LINE login has
+been verified. There is no generated Xcode project or signed IPA in the source
+archive; the workflow generates the native project. `unsigned-ipa` makes a debug
+build intended for testing/sideloading.
 
 Test on an iPhone before relying on this port: cold launch; email/password login
 and phone confirmation; session retention after relaunch; text sending/receiving;
