@@ -30,19 +30,11 @@ udid = phone['udid']
 if phone['state'] != 'Booted':
     run('xcrun', 'simctl', 'boot', udid)
 run('xcrun', 'simctl', 'bootstatus', udid, '-b')
-# Unsigned simulator bundles have no default Keychain access group. Give this
-# isolated simulator app a local ad-hoc identity; physical-device signing must
-# replace these with the user's real provisioning entitlements.
-entitlements = out / 'simulator-entitlements.plist'
-entitlements.write_bytes(plistlib.dumps({
-    'application-identifier': 'SIMULATOR0.' + identifier,
-    'com.apple.developer.team-identifier': 'SIMULATOR0',
-    'keychain-access-groups': ['SIMULATOR0.' + identifier],
-    'get-task-allow': True,
-}))
-run('codesign', '--force', '--sign', '-', '--entitlements', entitlements.resolve(), '--generate-entitlement-der', app)
+# Simulator UI smoke uses upstream's demo mode with fictional data. Real-data
+# Keychain access must be checked with the actual device signing profile.
+run('codesign', '--force', '--sign', '-', app)
 run('xcrun', 'simctl', 'install', udid, app)
-env = dict(os.environ, SIMCTL_CHILD_RUST_BACKTRACE='1', SIMCTL_CHILD_RUST_LOG='laab_lib=debug,line_rs=warn')
+env = dict(os.environ, SIMCTL_CHILD_LAAB_DEMO='1', SIMCTL_CHILD_RUST_BACKTRACE='1', SIMCTL_CHILD_RUST_LOG='laab_lib=debug,line_rs=warn')
 with (out / 'console.log').open('w') as log:
     process = subprocess.Popen(['xcrun', 'simctl', 'launch', '--console', '--terminate-running-process', udid, identifier], stdout=log, stderr=subprocess.STDOUT, env=env)
     # Allow slow cold starts on shared Mac runners; retain the app's stderr.
@@ -51,9 +43,12 @@ with (out / 'console.log').open('w') as log:
     (out / 'launch-status.txt').write_text(f'Console process exit status: {result}\n')
     try:
         run('xcrun', 'simctl', 'io', udid, 'screenshot', (out / 'native-iphone.png').resolve(), timeout=60)
-        data = Path(run('xcrun', 'simctl', 'get_app_container', udid, identifier, 'data').strip())
-        for p in data.rglob('laab*.log'):
-            shutil.copyfile(p, out / p.name)
+        try:
+            data = Path(run('xcrun', 'simctl', 'get_app_container', udid, identifier, 'data', timeout=30).strip())
+            for p in data.rglob('laab*.log'):
+                shutil.copyfile(p, out / p.name)
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+            (out / 'log-collection-error.txt').write_text(type(error).__name__)
         for p in (Path.home() / 'Library/Logs/DiagnosticReports').glob('LAAB*'):
             if p.is_file():
                 shutil.copyfile(p, out / p.name)

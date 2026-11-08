@@ -109,7 +109,7 @@ jobs:
               raise SystemExit('No simulator .app found')
           subprocess.run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', str(apps[0]), 'laab-simulator.zip'], check=True)
           PY
-      - name: Launch native app in iPhone simulator
+      - name: Launch native demo in iPhone simulator
         if: inputs.package == 'simulator'
         timeout-minutes: 5
         run: |
@@ -131,7 +131,7 @@ jobs:
           app = next(Path('src-tauri/gen/apple/build').rglob('*.app'))
           identifier = plistlib.loads((app / 'Info.plist').read_bytes())['CFBundleIdentifier']
           run('xcrun', 'simctl', 'install', udid, str(app))
-          launched = run('xcrun', 'simctl', 'launch', udid, identifier)
+          launched = subprocess.check_output(['xcrun', 'simctl', 'launch', udid, identifier], text=True, env=dict(os.environ, SIMCTL_CHILD_LAAB_DEMO='1'), timeout=120)
           print(launched)
           pid = int(re.search(r':\s*(\d+)', launched).group(1))
           time.sleep(12)
