@@ -1,4 +1,5 @@
 import { isIOS } from "../lib/platform";
+import { openUrl as openExternal } from "@tauri-apps/plugin-opener";
 import { motion } from "motion/react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
@@ -7,10 +8,11 @@ import { notice } from "../lib/ui";
 import { BubbleIcon } from "./Icons";
 import { Spinner } from "./kit";
 
-/** Which LINE desktop session a login replaces. The iPhone build signs in
- *  as LINE for Mac; the desktop build's password login as LINE for Windows. */
+/** Which LINE session a login replaces. The iPhone build signs in as an
+ *  Android secondary device; the desktop build's password login as LINE for
+ *  Windows. */
 const DEVICE_NOTE = isIOS
-  ? "เข้าสู่ระบบแบบ LINE for Mac: LINE บน Windows ยังใช้งานต่อได้ แต่ถ้าล็อกอิน LINE for Mac ไว้ที่เครื่องอื่น เครื่องนั้นจะถูกออกจากระบบ"
+  ? "เข้าสู่ระบบแบบ Android เครื่องที่สอง: LINE บนคอม (Windows หรือ Mac) ยังใช้งานต่อได้"
   : "ใช้แบบ LINE for Windows จะทำให้ LINE บน Windows ที่ล็อกอินอยู่ถูกออกจากระบบ (LINE for Mac ไม่กระทบ)";
 
 /** Email or phone number and password. LINE asks the phone to confirm with
@@ -70,7 +72,7 @@ function PasswordLogin({ busy }: { busy: boolean }) {
 export function LoginView() {
   const s = useSession();
   const [qr, setQr] = useState<string | null>(null);
-  const [method, setMethod] = useState<"qr" | "password">(isIOS ? "password" : "qr");
+  const [method, setMethod] = useState<"qr" | "password">("qr");
   useEffect(() => {
     if (!s?.qrUrl) return setQr(null);
     QRCode.toDataURL(s.qrUrl, { errorCorrectionLevel: "M", margin: 1, width: 440 }).then(setQr);
@@ -100,9 +102,23 @@ export function LoginView() {
           transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
           className="flex flex-col items-center gap-3">
           <div className="rounded-2xl bg-white p-3 shadow">
-            <img src={qr} width={220} height={220} alt="QR" />
+            {/* Long-press saves the QR on iPhone, to scan from LINE's album. */}
+            <img src={qr} width={220} height={220} alt="QR" style={{ WebkitTouchCallout: "default" }} />
           </div>
-          <p className="text-[13px] text-secondary">{isIOS ? "แสดง QR นี้บนอีกหน้าจอ แล้วใช้ LINE สแกน" : "เปิด LINE บนโทรศัพท์ แล้วสแกน QR นี้"}</p>
+          {isIOS && s?.qrUrl && (
+            <button
+              type="button"
+              onClick={() => s.qrUrl && openExternal(s.qrUrl).catch((e) => notice(errorText(e)))}
+              className="flex h-11 w-60 items-center justify-center rounded-lg bg-line-green text-[14px] font-semibold text-white"
+            >
+              เปิดใน LINE เพื่อยืนยัน
+            </button>
+          )}
+          <p className="max-w-72 text-[13px] leading-relaxed text-secondary">
+            {isIOS
+              ? "ถ้าปุ่มไม่เปิด LINE ให้แคปหน้าจอนี้ แล้วใน LINE กดสแกน QR เลือกรูปจากอัลบั้ม จากนั้นกลับมาที่แอปนี้"
+              : "เปิด LINE บนโทรศัพท์ แล้วสแกน QR นี้"}
+          </p>
           {isIOS && <p className="max-w-64 text-[11px] leading-relaxed text-secondary">{DEVICE_NOTE}</p>}
         </motion.div>
       )}

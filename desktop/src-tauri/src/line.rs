@@ -30,23 +30,24 @@ pub const DEFAULT_DEVICE: Device = Device::AndroidSecondary;
 
 /// The device new logins use. On the desktop, QR login keeps the Android
 /// secondary device and password login uses LINE for Windows, so a Mac
-/// running LINE for Mac is not signed out. On iPhone every login is LINE for
-/// Mac, so LINE for Windows on the user's PC stays signed in.
+/// running LINE for Mac is not signed out. On iPhone every login is the
+/// Android secondary device: LINE treats Windows and Mac as one computer
+/// slot, so either would sign out LINE on the user's PC.
 #[cfg(desktop)]
 const QR_DEVICE: Device = DEFAULT_DEVICE;
 #[cfg(desktop)]
 const PASSWORD_DEVICE: Device = Device::DesktopWin;
 #[cfg(mobile)]
-const QR_DEVICE: Device = Device::DesktopMac;
+const QR_DEVICE: Device = Device::AndroidSecondary;
 #[cfg(mobile)]
-const PASSWORD_DEVICE: Device = Device::DesktopMac;
+const PASSWORD_DEVICE: Device = Device::AndroidSecondary;
 
-/// Login options for a new session. On iPhone the device is named like a
-/// Mac in LINE's device list, matching the LINE for Mac device type.
+/// Login options for a new session. On iPhone the device is named "LAAB" in
+/// LINE's device list.
 fn login_options(device: Device, storage: SessionStorage) -> InitOptions {
     let options = InitOptions::new(device).storage(storage);
     #[cfg(mobile)]
-    let options = options.device_name("Mac");
+    let options = options.device_name("LAAB");
     options
 }
 const HISTORY_LIMIT: i32 = 100;
@@ -226,14 +227,15 @@ pub async fn start(state: Arc<AppState>) {
     let device: Device = device
         .and_then(|d| d.parse().ok())
         .unwrap_or(DEFAULT_DEVICE);
-    // A session saved by an older iPhone build logged in as LINE for Windows.
-    // Drop it so the next login is LINE for Mac and the PC stays signed in.
+    // A session saved by an older iPhone build logged in as LINE for Windows
+    // or Mac, which takes the PC's slot. Drop it so the next login is the
+    // Android secondary device and LINE on the PC stays signed in.
     #[cfg(mobile)]
-    if device == Device::DesktopWin {
+    if matches!(device, Device::DesktopWin | Device::DesktopMac) {
         clear_auth(&state);
         state.update_session(|s| {
             s.state = "signed_out".into();
-            s.status = "แอปเปลี่ยนเป็นเข้าสู่ระบบแบบ LINE for Mac แล้ว กรุณาเข้าสู่ระบบอีกครั้ง".into();
+            s.status = "แอปเปลี่ยนเป็นเข้าสู่ระบบแบบ Android เครื่องที่สองแล้ว กรุณาเข้าสู่ระบบอีกครั้ง".into();
         });
         return;
     }
