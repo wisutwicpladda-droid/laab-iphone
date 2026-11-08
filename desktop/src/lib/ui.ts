@@ -77,6 +77,8 @@ export interface UiState {
   railPage: "chats" | "friends" | "add";
   /** iPhone: the "แชท | เพื่อน" switch at the top of the chats tab. */
   chatsSegment: "chats" | "friends";
+  /** Stealth reading: open chats without telling LINE they were read. */
+  stealthRead: boolean;
   /** When this app last sent a message; that message scrolls the chat down. */
   sentAt: number;
   /** The announcement list over the chat is open. */
@@ -112,6 +114,7 @@ export const ui = createStore<UiState>({
   sentAt: 0,
   railPage: "chats",
   chatsSegment: "chats",
+  stealthRead: saved("stealthRead", false),
   composerMode: null,
   forwarding: null,
   translations: {},
@@ -127,6 +130,7 @@ export function setUi(patch: Partial<UiState>) {
   if (patch.listWidth != null) localStorage.setItem("chatListWidth", JSON.stringify(patch.listWidth));
   if (patch.collapsedFolders != null) localStorage.setItem("collapsedFolders", JSON.stringify(patch.collapsedFolders));
   if (patch.developerMode != null) localStorage.setItem("developerMode", JSON.stringify(patch.developerMode));
+  if (patch.stealthRead != null) localStorage.setItem("stealthRead", JSON.stringify(patch.stealthRead));
 }
 
 let noticeTimer: ReturnType<typeof setTimeout> | undefined;

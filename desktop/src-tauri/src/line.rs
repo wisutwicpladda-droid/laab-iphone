@@ -991,7 +991,10 @@ async fn ingest_live(state: &Arc<AppState>, line: &Arc<Line>, msg: Message) {
     if !known {
         chat.preview = convert::preview_line(&msg);
         chat.last_activity = chat.last_activity.max(msg.created_time);
-        if !msg.mine && !(focused && active) {
+        // In stealth reading, a message in the open chat still counts as
+        // unread: LINE is not told it was read.
+        let stealth = state.stealth_read.load(std::sync::atomic::Ordering::Relaxed);
+        if !msg.mine && (stealth || !(focused && active)) {
             chat.unread += 1;
         }
     }
@@ -1001,7 +1004,7 @@ async fn ingest_live(state: &Arc<AppState>, line: &Arc<Line>, msg: Message) {
     if known {
         return;
     }
-    if focused && active && !msg.mine {
+    if focused && active && !msg.mine && !state.stealth_read.load(std::sync::atomic::Ordering::Relaxed) {
         logged("marking read", line.chat(&chat_id).mark_as_read(&msg.id).await);
     }
     crate::notify::maybe_notify(state, &chat, &msg);

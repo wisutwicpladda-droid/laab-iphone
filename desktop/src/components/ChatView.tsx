@@ -11,13 +11,13 @@ import { api, errorText, messageLimit, q, queryClient, setMessageLimit, useChatL
 import { adjacentChat, isGroup, isKeepMemo } from "../lib/chatList";
 import { findHits } from "../lib/inChatSearch";
 import { closeChat, openChat } from "../lib/nav";
-import { dismissTop, notice, ui } from "../lib/ui";
+import { dismissTop, notice, ui, useUi } from "../lib/ui";
 import { Announcements } from "./Announcements";
 import { HeaderMenu } from "./ChatActions";
 import { Composer, type ComposerHandle } from "./Composer";
 import { InvitationBar, MessageRequestBar } from "./GroupSheets";
 import { RichMenu } from "./RichMenu";
-import { BellSlashIcon, ChevronIcon, CloseIcon, ExternalIcon, MenuLinesIcon, MoreVIcon, NoteIcon, SearchIcon, SpeakerIcon } from "./Icons";
+import { BellSlashIcon, ChevronIcon, CloseIcon, ExternalIcon, EyeSlashIcon, MenuLinesIcon, MoreVIcon, NoteIcon, SearchIcon, SpeakerIcon } from "./Icons";
 import { popupClass, Spinner } from "./kit";
 import type { RowContext } from "./MessageRow";
 import { StickerPanel } from "./StickerPanel";
@@ -81,6 +81,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
   const [unreadFrom, setUnreadFrom] = useState<string | null>(null);
   const me = session?.profile?.mid ?? "";
   const signedIn = session?.state === "signed_in";
+  const stealth = useUi((s) => s.stealthRead);
 
   // Tell the backend what is on screen right away; fetch after the user
   // settles on a chat for 150 ms, so arrow-key browsing stays fast.
@@ -90,7 +91,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
     setUnreadFrom(null);
     const t = setTimeout(() => {
       api
-        .openChat(chatId)
+        .openChat(chatId, ui.state.stealthRead)
         .then((first) => {
           if (!cancelled) setUnreadFrom(first);
         })
@@ -107,7 +108,7 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
     if (!main) return;
     const off = listen<boolean>("app-active", (e) => {
       api.setFocus(chatId, e.payload);
-      if (e.payload) api.markRead(chatId).catch(() => {});
+      if (e.payload && !ui.state.stealthRead) api.markRead(chatId).catch(() => {});
     });
     return () => {
       off.then((f) => f());
@@ -378,6 +379,19 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
         </div>
       )}
       {loadError && <div className="px-5 py-2 text-[12px] text-badge-red">โหลดข้อความไม่สำเร็จ: {errorText(loadError)}</div>}
+      {stealth && chat && (chat.unread > 0 || chat.markedUnread) && (
+        // Stealth reading: the others don't see this chat as read until now.
+        <div className="flex shrink-0 items-center gap-2 border-b border-separator bg-list px-4 py-2 text-[13px] text-secondary">
+          <EyeSlashIcon size={17} className="shrink-0" />
+          <span className="min-w-0 flex-1 leading-snug">แอบอ่านอยู่ อีกฝ่ายยังไม่เห็นว่าคุณอ่านแล้ว</span>
+          <button
+            onClick={() => api.markRead(chatId).catch((e) => notice(errorText(e)))}
+            className="h-8 shrink-0 rounded-full bg-line-green px-3.5 text-[13px] font-semibold text-white active:opacity-80"
+          >
+            ส่งว่าอ่านแล้ว
+          </button>
+        </div>
+      )}
       <Timeline
         messages={messages}
         loading={loadingMessages}

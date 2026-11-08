@@ -1,6 +1,6 @@
 import { Menu } from "@base-ui/react/menu";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { setAnalytics } from "../lib/analytics";
 import { api, errorText, q, queryClient, useChatList, useSession } from "../lib/api";
 import { openChat } from "../lib/nav";
@@ -52,6 +52,11 @@ export function Rail() {
   const session = useSession();
   const page = useUi((s) => s.railPage);
   const dev = useUi((s) => s.developerMode);
+  const stealth = useUi((s) => s.stealthRead);
+  // The backend skips "read" while this is on; it also comes with each open_chat.
+  useEffect(() => {
+    api.setStealthRead(stealth).catch(() => {});
+  }, [stealth]);
   const unread = (list?.chats ?? []).reduce((n, c) => n + Math.max(0, c.unread), 0);
   const signedIn = session?.state === "signed_in";
   const me = session?.profile?.mid;
@@ -120,6 +125,10 @@ export function Rail() {
               <Menu.Item className={itemClass} disabled={!signedIn} onClick={sync}>
                 รีเฟรชแชท
               </Menu.Item>
+              <Menu.CheckboxItem className={itemClass} checked={stealth} onCheckedChange={(v) => setUi({ stealthRead: v })}>
+                <span className="w-4 text-center">{stealth ? "✓" : ""}</span>
+                แอบอ่าน (ไม่ส่งว่าอ่านแล้ว)
+              </Menu.CheckboxItem>
               <Menu.CheckboxItem className={itemClass} checked={dev} onCheckedChange={(v) => setUi({ developerMode: v })}>
                 <span className="w-4 text-center">{dev ? "✓" : ""}</span>
                 เครื่องมือนักพัฒนา

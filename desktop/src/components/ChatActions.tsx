@@ -82,6 +82,7 @@ export function ChatActions({ chat }: { chat: Chat }) {
       {chat.unread <= 0 && !chat.markedUnread && (
         <Item onClick={() => run(api.markUnread(chat.id))}>ทำเครื่องหมายว่ายังไม่ได้อ่าน</Item>
       )}
+      {(chat.unread > 0 || chat.markedUnread) && <Item onClick={() => run(api.markRead(chat.id))}>ทำเครื่องหมายว่าอ่านแล้ว</Item>}
       <FolderMenu chat={chat} />
       <LeaveFolder chat={chat} />
     </>

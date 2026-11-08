@@ -18,7 +18,12 @@ function App() {
     if (!isIOS) return;
     document.documentElement.classList.add("ios");
     const viewport = window.visualViewport;
-    const resize = () => document.documentElement.style.setProperty("--app-height", `${viewport?.height ?? window.innerHeight}px`);
+    const resize = () => {
+      const height = viewport?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty("--app-height", `${height}px`);
+      // The keyboard covers the home indicator, so its safe area is not needed.
+      document.documentElement.classList.toggle("keyboard", height < window.innerHeight - 120);
+    };
     resize();
     viewport?.addEventListener("resize", resize);
     const changed = () => setHash(location.hash);

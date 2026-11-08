@@ -1,6 +1,7 @@
 //! Shared app state and the events pushed to the frontend.
 
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -30,6 +31,9 @@ pub struct AppState {
     /// The last events loaded for each calendar window (a chat id, or `all`)
     /// and when, so a window opens on them while it loads fresh ones.
     pub calendars: Mutex<HashMap<String, (f64, crate::actions::AllCalendars)>>,
+    /// Stealth reading: opening a chat or a message arriving in the open
+    /// chat does not tell LINE it was read, until the user marks it read.
+    pub stealth_read: AtomicBool,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -72,6 +76,7 @@ impl AppState {
             members_loaded: Mutex::new(HashMap::new()),
             viewer: Mutex::new(serde_json::Value::Null),
             calendars: Mutex::new(HashMap::new()),
+            stealth_read: AtomicBool::new(false),
         })
     }
 

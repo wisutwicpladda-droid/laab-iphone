@@ -144,6 +144,7 @@ body,
    and a floating glass tab bar over the list. */
 .ios {
   --color-list: light-dark(#ffffff, #101011);
+  --color-chat: light-dark(#ffffff, #101011);
   --color-field: light-dark(#eff0f2, #1f1f21);
   --color-separator: light-dark(#e6e7e9, #252528);
   --color-row-selected: light-dark(#eff0f2, #1c1c1e);
@@ -153,6 +154,13 @@ body,
   --color-secondary: light-dark(#8a8c90, #8d8e93);
   --color-pin: #3e74ef;
 }
+/* Edge to edge: the page colour runs under the status bar and the home
+   indicator, the tab bar floats just above the indicator, and in a chat the
+   composer keeps clear of it (but not of the keyboard, which covers it). */
+.ios, .ios body { background: var(--color-list); }
+.ios #root:has(.laab-layout) { padding-bottom: 0; }
+.ios .has-chat .composer-root { padding-bottom: calc(7px + env(safe-area-inset-bottom)); }
+.ios.keyboard .has-chat .composer-root { padding-bottom: 7px; }
 .ios .ios-glass {
   background: light-dark(rgba(242, 243, 245, 0.82), rgba(40, 40, 43, 0.78));
   border: 0.5px solid light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
@@ -160,7 +168,8 @@ body,
   backdrop-filter: blur(20px) saturate(180%);
 }
 .ios .laab-layout > [data-rail] {
-  position: absolute; z-index: 30; left: 14px; right: 14px; bottom: 4px;
+  position: absolute; z-index: 30; left: 14px; right: 14px;
+  bottom: max(6px, calc(env(safe-area-inset-bottom) - 12px));
   width: auto; height: 64px; padding: 5px; border-radius: 32px;
   background: light-dark(rgba(248, 248, 250, 0.8), rgba(34, 34, 37, 0.8));
   border: 0.5px solid light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.1));
@@ -168,8 +177,11 @@ body,
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
 }
-.ios .laab-chat-list .overflow-y-auto { padding-bottom: 84px; }
-.ios .laab-chat-list .ios-status { position: absolute; left: 16px; right: 16px; bottom: 76px; z-index: 20; border: 0; border-radius: 10px; }
+.ios .laab-chat-list .overflow-y-auto { padding-bottom: calc(max(6px, calc(env(safe-area-inset-bottom) - 12px)) + 76px); }
+.ios .laab-chat-list .ios-status {
+  position: absolute; left: 16px; right: 16px; z-index: 20; border: 0; border-radius: 10px;
+  bottom: calc(max(6px, calc(env(safe-area-inset-bottom) - 12px)) + 72px);
+}
 .rail-label { display: none; }
 .ios [data-rail] .rail-button { flex: 1 1 0; width: auto; height: 100%; border-radius: 27px; gap: 2px; padding-top: 2px; }
 .ios [data-rail] .rail-button[data-active] { background: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.12)); }

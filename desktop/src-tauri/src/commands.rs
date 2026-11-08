@@ -144,13 +144,26 @@ pub fn set_focus(state: S<'_>, chat_id: Option<String>, active: bool) {
     f.active = active;
 }
 
+/// Turn stealth reading on or off (see [`AppState::stealth_read`]).
+#[tauri::command]
+pub fn set_stealth_read(state: S<'_>, on: bool) {
+    state.stealth_read.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
 /// Opening a chat: clear unread, acknowledge, then fetch fresh history,
 /// read status and members in the background. Returns the first unread
-/// message, if any, for the timeline's unread mark.
+/// message, if any, for the timeline's unread mark. With `stealth`, the
+/// chat stays unread here and on the others' side.
 #[tauri::command]
-pub async fn open_chat(state: S<'_>, chat_id: String) -> R<Option<String>> {
+pub async fn open_chat(state: S<'_>, chat_id: String, stealth: Option<bool>) -> R<Option<String>> {
     crate::usage::hit(crate::usage::Action::OpenedChat);
     let s = state.inner().clone();
+    // Passed with the call, so a chat reopened at launch is not marked read
+    // before the frontend's setting reaches the backend.
+    if let Some(on) = stealth {
+        s.stealth_read.store(on, std::sync::atomic::Ordering::Relaxed);
+    }
+    let stealth = stealth.unwrap_or_else(|| s.stealth_read.load(std::sync::atomic::Ordering::Relaxed));
     let unread = s
         .store()
         .chat(&chat_id)
@@ -160,11 +173,11 @@ pub async fn open_chat(state: S<'_>, chat_id: String) -> R<Option<String>> {
     let had_unread = unread > 0;
     // Where the timeline draws "unread messages", before the count is cleared.
     let target = s.store().first_unread(&chat_id, unread).map_err(err)?;
-    let unmarked = s.store().set_marked_unread(&chat_id, false).map_err(err)?;
-    if had_unread {
+    let unmarked = !stealth && s.store().set_marked_unread(&chat_id, false).map_err(err)?;
+    if had_unread && !stealth {
         s.store().set_unread(&chat_id, 0).map_err(err)?;
     }
-    if had_unread || unmarked {
+    if (had_unread && !stealth) || unmarked {
         s.chats_changed();
     }
     if s.demo {
@@ -176,7 +189,9 @@ pub async fn open_chat(state: S<'_>, chat_id: String) -> R<Option<String>> {
         if let Some(l) = s.line().await {
             line::retry_undecrypted(&s, &l, Some(&chat_id)).await;
         }
-        acknowledge(&s, &chat_id).await;
+        if !stealth {
+            acknowledge(&s, &chat_id).await;
+        }
         let _ = line::read_status(&s, &chat_id).await;
         crate::actions::prefetch_calendars(&s, Some(&chat_id)).await;
         if chat_id.starts_with('c') || chat_id.starts_with('r') {

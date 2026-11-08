@@ -351,6 +351,14 @@ export const CaretDownIcon = (p: P) => (
     <path d="M6.2 9.2a.8.8 0 0 1 .6-1.3h10.4a.8.8 0 0 1 .6 1.3l-5.2 6.1a.8.8 0 0 1-1.2 0L6.2 9.2Z" />
   </svg>
 );
+/** Stealth reading: an eye, struck through. */
+export const EyeSlashIcon = (p: P) => (
+  <svg {...line(p)}>
+    <path d="M3 12s3.3-6 9-6 9 6 9 6-3.3 6-9 6-9-6-9-6Z" />
+    <circle cx="12" cy="12" r="2.6" />
+    <path d="M4 4l16 16" />
+  </svg>
+);
 export const BellIcon = (p: P) => (
   <svg {...outline(p)}>
     <path d="M6 16.5V10.5a6 6 0 0 1 12 0v6l1.5 2h-15L6 16.5Z" />
