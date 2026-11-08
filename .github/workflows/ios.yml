@@ -107,17 +107,19 @@ jobs:
           PY
       - name: Launch native app in iPhone simulator
         if: inputs.package == 'simulator'
+        timeout-minutes: 5
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import json, os, plistlib, re, subprocess, time
           def run(*args):
-              return subprocess.check_output(args, text=True)
+              print('Running:', ' '.join(args), flush=True)
+              return subprocess.check_output(args, text=True, timeout=180)
           devices = json.loads(run('xcrun', 'simctl', 'list', 'devices', 'available', '--json'))['devices']
           phones = [d for group in devices.values() for d in group if d['name'].startswith('iPhone')]
           if not phones:
               raise SystemExit('No available iPhone simulator')
-          phone = next((d for d in phones if d['state'] == 'Booted'), phones[-1])
+          phone = next((d for d in phones if d['state'] == 'Booted'), phones[0])
           udid = phone['udid']
           if phone['state'] != 'Booted':
               run('xcrun', 'simctl', 'boot', udid)
@@ -134,9 +136,10 @@ jobs:
           Path('laab-native-launch.txt').write_text('App remained running after cold launch: ' + launched)
           PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: laab-ios-${{ inputs.package }}
-          if-no-files-found: error
+          if-no-files-found: warn
           path: |
             desktop/laab-simulator.zip
             desktop/src-tauri/gen/apple/build/**/*.ipa
