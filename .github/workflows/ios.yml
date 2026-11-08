@@ -111,34 +111,8 @@ jobs:
           PY
       - name: Launch native demo in iPhone simulator
         if: inputs.package == 'simulator'
-        timeout-minutes: 5
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import json, os, plistlib, re, subprocess, time
-          def run(*args):
-              print('Running:', ' '.join(args), flush=True)
-              return subprocess.check_output(args, text=True, timeout=180)
-          devices = json.loads(run('xcrun', 'simctl', 'list', 'devices', 'available', '--json'))['devices']
-          phones = [d for group in devices.values() for d in group if d['name'].startswith('iPhone')]
-          if not phones:
-              raise SystemExit('No available iPhone simulator')
-          phone = next((d for d in phones if d['state'] == 'Booted'), phones[0])
-          udid = phone['udid']
-          if phone['state'] != 'Booted':
-              run('xcrun', 'simctl', 'boot', udid)
-          run('xcrun', 'simctl', 'bootstatus', udid, '-b')
-          app = next(Path('src-tauri/gen/apple/build').rglob('*.app'))
-          identifier = plistlib.loads((app / 'Info.plist').read_bytes())['CFBundleIdentifier']
-          run('xcrun', 'simctl', 'install', udid, str(app))
-          launched = subprocess.check_output(['xcrun', 'simctl', 'launch', udid, identifier], text=True, env=dict(os.environ, SIMCTL_CHILD_LAAB_DEMO='1'), timeout=120)
-          print(launched)
-          pid = int(re.search(r':\s*(\d+)', launched).group(1))
-          time.sleep(12)
-          os.kill(pid, 0)
-          run('xcrun', 'simctl', 'io', udid, 'screenshot', 'laab-native-iphone.png')
-          Path('laab-native-launch.txt').write_text('App remained running after cold launch: ' + launched)
-          PY
+        timeout-minutes: 8
+        run: python3 ../scripts/ios-smoke.py .
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -149,6 +123,7 @@ jobs:
             desktop/src-tauri/gen/apple/build/**/*.ipa
             desktop/laab-native-iphone.png
             desktop/laab-native-launch.txt
+            desktop/ios-diagnostics/**
       - uses: actions/upload-artifact@v4
         if: always()
         with:

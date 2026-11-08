@@ -5,6 +5,7 @@ import os
 import plistlib
 import shutil
 import subprocess
+import sys
 import time
 import zipfile
 
@@ -15,7 +16,8 @@ def run(*args, timeout=180):
     print('Running:', ' '.join(map(str, args)), flush=True)
     return subprocess.check_output(list(map(str, args)), text=True, timeout=timeout)
 
-archive = next(Path('simulator-artifact').rglob('laab-simulator.zip'))
+artifact_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('simulator-artifact')
+archive = next(artifact_dir.rglob('laab-simulator.zip'))
 with zipfile.ZipFile(archive) as z:
     z.extractall('simulator-app')
 app = next(Path('simulator-app').rglob('*.app')).resolve()

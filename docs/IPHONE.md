@@ -90,8 +90,11 @@ iOS IPA was built successfully by run 42476363332:
 https://github.com/wisutwicpladda-droid/laab-iphone/actions/runs/42476363332
 
 The unsigned IPA's Mach-O platform is iOS (not Simulator), supported platform is
-iPhoneOS, and minimum iOS version is 15.0. Native simulator launch validation is
-tracked separately in `VALIDATION.txt`. No physical iPhone or real LINE login has
+iPhoneOS, and minimum iOS version is 15.0. Native simulator UI validation is tracked separately in `VALIDATION.txt`.
+The unsigned non-demo simulator app cannot read Keychain without a valid app
+identity; a normal device install must be signed with the actual personal/team
+profile. The account-free simulator UI smoke uses upstream's `LAAB_DEMO=1` with
+fictional data. Demo mode never opens the normal encrypted data directory. No physical iPhone or real LINE login has
 been verified. There is no generated Xcode project or signed IPA in the source
 archive; the workflow generates the native project. `unsigned-ipa` makes a debug
 build intended for testing/sideloading.
@@ -106,3 +109,28 @@ LIFF windows/devtools, Finder actions, clipboard images, and image scanning stil
 need mobile-specific implementations or runtime verification. HEIC conversion
 currently falls back to the existing non-macOS path. This is an unofficial LINE
 client; upstream's account-risk warning still applies.
+
+
+## Porting and test notes
+
+The iOS target must use `rusqlite/bundled-sqlcipher-vendored-openssl` so the
+SQLCipher build receives its own target crypto headers and static library.
+Adding a direct vendored openssl-sys dependency alone does not wire those headers
+into libsqlite3-sys. Desktop-only dialog parent, window unminimize and macOS
+window-chrome calls must be gated. pnpm's automatic dependency recheck is disabled
+for script execution because Xcode sanitizes its build environment; dependencies
+are still installed explicitly using the frozen lockfile first.
+
+For this task's Windows setup, Sideloadly and the signed Apple Mobile Device
+Support component were installed. The service started and USB device detection
+was verified. Apple ID authentication is performed manually by the user.
+
+
+Native simulator demo verification succeeded in run 42480994336:
+https://github.com/wisutwicpladda-droid/laab-iphone/actions/runs/42480994336
+
+The screenshot shows the real Tauri iOS app rendering sample chats, with its native
+backend running in demo mode. This validates startup/UI/IPC, not a real LINE
+session or a production Keychain identity. On Windows, the user manually reached
+the iOS developer-profile trust prompt after signing/installing with Sideloadly;
+physical launch confirmation is still pending.

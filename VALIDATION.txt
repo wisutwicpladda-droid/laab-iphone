@@ -26,8 +26,22 @@ PASS: Playwright Chromium UI smoke, mocked Tauri IPC and iPhone user agent
   Expected browser-only console errors: unsupported native media:// URLs and
   missing favicon.ico; these do not test the native media protocol.
 
-NATIVE SIMULATOR: pending run 42476591009
-https://github.com/wisutwicpladda-droid/laab-iphone/actions/runs/42476591009
+PASS: native simulator library check and simulator app archive build.
+Known test limitation: an unsigned non-demo Simulator app failed Keychain access
+with errSecMissingEntitlement. This is not a valid signed-device runtime test.
+A trial with signature-carried simulator entitlements did not launch; that
+approach was removed. PASS: native UI demo smoke run 42480994336, using upstream LAAB_DEMO=1,
+fictional data only, with no production Keychain fallback. The app remained
+running and rendered its sample conversation in the actual iPhone Simulator.
+Screenshot evidence: native-iphone-demo.png (1206x2622).
+https://github.com/wisutwicpladda-droid/laab-iphone/actions/runs/42480994336
+
+WINDOWS INSTALL PREPARATION:
+  Sideloadly v0.72 installed and IPA selected.
+  Apple Mobile Device Support 20.0.1.47 installed from Apple-signed MSI.
+  Apple Mobile Device Service running, USB phone detected.
+  User manually signed/installed and reported the iOS Untrusted Developer prompt.
+  Trusting the profile and opening the app on the real phone await user confirmation.
 
 NOT TESTED: physical iPhone signing/install, real LINE login, sending/receiving
 on LINE, photos/files on a real device, actual iOS keyboard, background lifecycle.
@@ -36,4 +50,4 @@ still need mobile-specific behavior; see docs/IPHONE.md.
 
 The IPA is unsigned. Use a free Apple ID in Sideloadly on Windows (7-day signing)
 or arrange a signed distribution. It does not install by opening it in Safari.
-No Apple/LINE accounts or real chat data were accessed during this task.
+The assistant did not read/type Apple/LINE credentials or inspect real chat data.
