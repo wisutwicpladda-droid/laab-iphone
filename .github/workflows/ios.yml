@@ -83,7 +83,7 @@ jobs:
         run: pnpm tauri ios init
       - name: Build simulator app (cannot install on iPhone)
         if: inputs.package == 'simulator'
-        run: pnpm tauri ios build --ci --target aarch64-sim --no-sign
+        run: pnpm tauri ios build --ci --debug --target aarch64-sim --no-sign
       - name: Build device IPA for signing with a free Apple ID on Windows
         if: inputs.package == 'unsigned-ipa'
         run: pnpm tauri ios build --ci --debug --target aarch64 --no-sign
@@ -105,6 +105,34 @@ jobs:
               raise SystemExit('No simulator .app found')
           subprocess.run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', str(apps[0]), 'laab-simulator.zip'], check=True)
           PY
+      - name: Launch native app in iPhone simulator
+        if: inputs.package == 'simulator'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, os, plistlib, re, subprocess, time
+          def run(*args):
+              return subprocess.check_output(args, text=True)
+          devices = json.loads(run('xcrun', 'simctl', 'list', 'devices', 'available', '--json'))['devices']
+          phones = [d for group in devices.values() for d in group if d['name'].startswith('iPhone')]
+          if not phones:
+              raise SystemExit('No available iPhone simulator')
+          phone = next((d for d in phones if d['state'] == 'Booted'), phones[-1])
+          udid = phone['udid']
+          if phone['state'] != 'Booted':
+              run('xcrun', 'simctl', 'boot', udid)
+          run('xcrun', 'simctl', 'bootstatus', udid, '-b')
+          app = next(Path('src-tauri/gen/apple/build').rglob('*.app'))
+          identifier = plistlib.loads((app / 'Info.plist').read_bytes())['CFBundleIdentifier']
+          run('xcrun', 'simctl', 'install', udid, str(app))
+          launched = run('xcrun', 'simctl', 'launch', udid, identifier)
+          print(launched)
+          pid = int(re.search(r':\s*(\d+)', launched).group(1))
+          time.sleep(12)
+          os.kill(pid, 0)
+          run('xcrun', 'simctl', 'io', udid, 'screenshot', 'laab-native-iphone.png')
+          Path('laab-native-launch.txt').write_text('App remained running after cold launch: ' + launched)
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: laab-ios-${{ inputs.package }}
@@ -112,6 +140,8 @@ jobs:
           path: |
             desktop/laab-simulator.zip
             desktop/src-tauri/gen/apple/build/**/*.ipa
+            desktop/laab-native-iphone.png
+            desktop/laab-native-launch.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
