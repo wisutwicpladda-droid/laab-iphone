@@ -1,5 +1,13 @@
 # LAAB (ลาบ)
 
+## Experimental iPhone port in this fork
+
+This fork adds iOS platform support and a mobile layout. See
+[iPhone build and installation](docs/IPHONE.md) for cloud Mac builds and
+installation with a free Apple ID using Sideloadly on Windows, or TestFlight
+with a paid developer account. Native device behavior still needs validation.
+The upstream macOS instructions follow below.
+
 A LINE client for macOS. It's a Tauri app (React and Rust) that talks to LINE
 through [line-rs](https://github.com/softnetics/line-rs). The code is in
 `desktop/`; [`desktop/README.md`](desktop/README.md) has the developer notes.
