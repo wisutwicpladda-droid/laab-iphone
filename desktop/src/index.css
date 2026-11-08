@@ -207,8 +207,17 @@ body,
 .ios .chat-timeline {
   --color-incoming: light-dark(#ffffff, #3b3d3e);
   --line-meta: light-dark(rgba(255, 255, 255, 0.92), #9a9c9f);
-  background: light-dark(#7494c0, #1c1c1e);
+  background: transparent;
 }
+/* The chat room: LINE's background under the status bar, header, timeline and
+   message bar, with the controls on glass. */
+.ios .ios-chat { background: light-dark(#7494c0, #1c1c1e); }
+.ios:has(.has-chat), .ios:has(.has-chat) body { background: light-dark(#7494c0, #1c1c1e); }
+.ios .ios-chat .ios-chat-title { color: light-dark(#ffffff, #f2f2f2); text-shadow: light-dark(0 1px 2px rgba(0, 0, 0, 0.18), none); }
+.ios .ios-chat .composer-root { background: transparent; border-top: 0; padding-left: 12px; padding-right: 12px; }
+.ios .ios-chat .composer-root [aria-label="ส่ง"]:disabled { color: light-dark(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.35)); }
+.ios .ios-chat .chat-timeline .chip-text { background: light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.12)); }
+.ios .ios-chat .chat-timeline > div:first-child { padding-left: 12px; padding-right: 12px; }
 .ios .chat-timeline > div:first-child { padding-left: 10px; padding-right: 10px; }
 .ios .chat-timeline .msg-meta .text-secondary,
 .ios .chat-timeline .msg-sender,

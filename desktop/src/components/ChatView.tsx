@@ -237,23 +237,28 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
   // LINE for iPhone counts the other chats' unread messages beside "‹".
   const otherUnread = (list?.chats ?? []).reduce((n, c) => n + (c.id === chatId ? 0 : Math.max(0, c.unread)), 0);
   return (
-    <div className="relative flex h-full flex-col bg-chat">
+    <div className={`relative flex h-full flex-col bg-chat ${isIOS ? "ios-chat" : ""}`}>
       {/* LINE for Mac: the header sits under a title-bar strip, level with
           the chat list's search box. */}
       <div className="desktop-title-space drag h-[56px] shrink-0" data-tauri-drag-region />
       {isIOS && (
-        <header className="grid h-[50px] shrink-0 grid-cols-[minmax(84px,auto)_1fr_minmax(84px,auto)] items-center border-b border-separator bg-chat px-1">
-          <button onClick={animatedBack} aria-label="แชททั้งหมด" className="flex h-11 items-center gap-0.5 pr-2 pl-1 text-primary">
+        // LINE for iPhone: glass capsules over the chat background.
+        <header className="ios-chat-bar grid h-[58px] shrink-0 grid-cols-[auto_1fr_auto] items-center gap-1.5 px-3">
+          <button
+            onClick={animatedBack}
+            aria-label="แชททั้งหมด"
+            className="ios-glass flex h-[44px] min-w-[44px] items-center justify-center gap-0.5 justify-self-start rounded-full pr-3 pl-1.5 text-primary"
+          >
             <ChevronIcon dir="left" size={22} />
-            {otherUnread > 0 && <span className="text-[16px]">{otherUnread > 999 ? "999+" : otherUnread}</span>}
+            {otherUnread > 0 && <span className="text-[16px] font-medium">{otherUnread > 999 ? "999+" : otherUnread}</span>}
           </button>
-          <h2 className="flex min-w-0 items-center justify-center gap-1 text-[17px] font-semibold">
+          <h2 className="ios-chat-title flex min-w-0 items-center justify-center gap-1 text-[17px] font-bold">
             <span className="truncate">{isKeepMemo({ id: chatId }, me) ? "Keep Memo" : title}</span>
             {group && chat?.memberCount ? <span className="shrink-0">({chat.memberCount})</span> : null}
-            {chat?.muted && <BellSlashIcon size={13} className="shrink-0 text-secondary" />}
+            {chat?.muted && <BellSlashIcon size={14} className="shrink-0 opacity-60" />}
           </h2>
-          <div className="flex items-center justify-end">
-            <button title="ค้นหาในแชท" aria-label="ค้นหาในแชท" onClick={openSearch} className="grid h-11 w-10 place-items-center text-primary">
+          <div className="ios-glass flex items-center justify-self-end rounded-full px-0.5">
+            <button title="ค้นหาในแชท" aria-label="ค้นหาในแชท" onClick={openSearch} className="grid h-[44px] w-[40px] place-items-center text-primary">
               <SearchIcon size={21} />
             </button>
             {group && (
@@ -261,14 +266,14 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
                 title="โน้ต"
                 aria-label="โน้ต"
                 onClick={() => api.openAuxWindow("albums", chatId, title, "notes").catch((e) => notice(errorText(e)))}
-                className="grid h-11 w-10 place-items-center text-primary"
+                className="grid h-[44px] w-[40px] place-items-center text-primary"
               >
                 <NoteIcon size={21} />
               </button>
             )}
             {chat && (
               <Menu.Root>
-                <Menu.Trigger aria-label="เมนูแชท" className="grid h-11 w-10 place-items-center text-primary">
+                <Menu.Trigger aria-label="เมนูแชท" className="grid h-[44px] w-[40px] place-items-center text-primary">
                   <MenuLinesIcon size={23} />
                 </Menu.Trigger>
                 <Menu.Portal>
@@ -384,7 +389,13 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
       {loadError && <div className="px-5 py-2 text-[12px] text-badge-red">โหลดข้อความไม่สำเร็จ: {errorText(loadError)}</div>}
       {stealth && chat && (chat.unread > 0 || chat.markedUnread) && (
         // Stealth reading: the others don't see this chat as read until now.
-        <div className="flex shrink-0 items-center gap-2 border-b border-separator bg-list px-4 py-2 text-[13px] text-secondary">
+        <div
+          className={
+            isIOS
+              ? "ios-glass mx-3 mb-1 flex shrink-0 items-center gap-2 rounded-full py-1.5 pr-1.5 pl-3.5 text-[13px] text-primary"
+              : "flex shrink-0 items-center gap-2 border-b border-separator bg-list px-4 py-2 text-[13px] text-secondary"
+          }
+        >
           <EyeSlashIcon size={17} className="shrink-0" />
           <span className="min-w-0 flex-1 leading-snug">แอบอ่านอยู่ อีกฝ่ายยังไม่เห็นว่าคุณอ่านแล้ว</span>
           <button

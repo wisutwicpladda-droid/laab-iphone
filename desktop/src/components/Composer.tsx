@@ -533,7 +533,7 @@ export const Composer = forwardRef<
           </button>
         </div>
       )}
-      <div className={isIOS ? "flex items-end gap-1" : ""}>
+      <div className={isIOS ? "flex items-end gap-2" : ""}>
         {isIOS && (
           <>
             <input ref={photoInput} type="file" accept="image/*" multiple hidden onChange={onPicked} />
@@ -546,24 +546,24 @@ export const Composer = forwardRef<
             title="แสดงเมนู"
             aria-label="แสดงเมนู"
             onClick={(e) => (e.stopPropagation(), setToolsOpen(true))}
-            className="-ml-1.5 grid h-[38px] w-8 shrink-0 place-items-center text-primary"
+            className="ios-glass grid h-[40px] w-[40px] shrink-0 place-items-center rounded-full text-primary"
           >
             <ChevronIcon dir="right" size={22} />
           </button>
         )}
         {isIOS && showTools && (
+          // LINE for iPhone: +, camera and photos on one glass capsule.
+          <div className="ios-glass flex h-[40px] shrink-0 items-center rounded-full px-1">
           <button
             type="button"
             title="แนบไฟล์"
             aria-label="แนบไฟล์"
             disabled={disabled}
             onClick={(e) => (e.stopPropagation(), void attach())}
-            className="-ml-1.5 grid h-[38px] w-9 shrink-0 place-items-center text-primary disabled:opacity-40"
+            className="grid h-[38px] w-9 shrink-0 place-items-center text-primary disabled:opacity-40"
           >
             <PlusIcon size={24} />
           </button>
-        )}
-        {isIOS && showTools && (
           <button
             type="button"
             title="ถ่ายรูป"
@@ -574,8 +574,6 @@ export const Composer = forwardRef<
           >
             <CameraOutlineIcon size={25} strokeWidth={1.7} />
           </button>
-        )}
-        {isIOS && showTools && (
           <button
             type="button"
             title="ส่งรูป"
@@ -586,8 +584,9 @@ export const Composer = forwardRef<
           >
             <ImageOutlineIcon size={24} strokeWidth={1.7} />
           </button>
+          </div>
         )}
-        <div className={isIOS ? "composer-pill flex min-w-0 flex-1 items-end gap-1 rounded-[19px] bg-field py-[9px] pr-2 pl-3.5" : ""}>
+        <div className={isIOS ? "composer-pill ios-glass flex min-h-[40px] min-w-0 flex-1 items-end gap-1 rounded-[20px] py-[9px] pr-2 pl-3.5" : ""}>
       <div className="relative min-w-0 flex-1" style={{ height }}>
         <div
           ref={mirror}
