@@ -124,8 +124,9 @@ body,
 }
 .ios .laab-layout { flex-direction: column; }
 .ios .laab-layout > [data-rail] {
-  order: 3; width: 100%; height: 56px; flex-shrink: 0;
-  flex-direction: row; justify-content: space-around; padding: 4px 8px; gap: 4px;
+  order: 3; width: 100%; height: 54px; flex-shrink: 0;
+  flex-direction: row; align-items: stretch; justify-content: space-around; padding: 0; gap: 0;
+  background: var(--color-list); border-top: 1px solid var(--color-separator);
 }
 .ios [data-rail] > .flex-1 { display: none; }
 .ios .laab-layout > .w-px, .ios .laab-divider { display: none; }
@@ -135,10 +136,33 @@ body,
 .ios .has-chat > .laab-conversation { display: flex; flex-direction: column; }
 .ios .laab-conversation > .relative { flex: 1; min-height: 0; height: auto; }
 .ios .desktop-title-space, .ios .desktop-send-hint { display: none; }
-.ios .composer-tools { margin-top: 8px; }
 .ios input, .ios textarea, .ios .composer-mirror { font-size: 16px !important; }
 .ios .drag { -webkit-app-region: no-drag; }
 .ios button { touch-action: manipulation; }
 .mobile-back { display: block; width: 100%; min-height: 44px; flex-shrink: 0; text-align: left; padding: 8px 16px; color: var(--color-line-green); font-size: 16px; border-bottom: 1px solid var(--color-separator); }
-.mobile-send { min-height: 44px; min-width: 52px; border-radius: 12px; background: var(--color-line-green); color: white; font-size: 16px; }
-.mobile-send:disabled { opacity: .4; }
+
+/* LINE for iPhone look. */
+.rail-label { display: none; }
+.ios [data-rail] .rail-button { flex: 1 1 0; width: auto; height: 100%; border-radius: 0; gap: 3px; padding-top: 3px; }
+.ios [data-rail] .rail-label { display: block; font-size: 10px; line-height: 12px; }
+.ios [data-rail] .rail-keep { display: none; }
+.ios [data-rail] .rail-badge { left: 50%; top: 2px; margin-left: 4px; }
+.ios .desktop-fab, .ios .desktop-chat-header { display: none; }
+.ios .list-search { height: 36px; border-radius: 10px; }
+.ios .chat-row-name { font-size: 16px; font-weight: 600; }
+.ios .chat-row-preview { font-size: 13.5px; }
+.ios .chat-row-time { font-size: 11.5px; }
+.ios .chat-timeline {
+  --color-incoming: light-dark(#ffffff, #3b3d3e);
+  --line-meta: light-dark(rgba(255, 255, 255, 0.92), #9a9c9f);
+  background: light-dark(#7494c0, #1c1c1e);
+}
+.ios .chat-timeline > div:first-child { padding-left: 10px; padding-right: 10px; }
+.ios .chat-timeline .msg-meta .text-secondary,
+.ios .chat-timeline .msg-sender,
+.ios .chat-timeline .timeline-note,
+.ios .chat-timeline [data-unread-mark] { color: var(--line-meta); }
+.ios .chat-timeline .chip-text { background: rgba(0, 0, 0, 0.2); color: #fff; }
+.ios .msg-bubble { font-size: 16px; line-height: 1.38; border-radius: 18px; padding: 8px 12px; }
+.ios .composer-root { padding-top: 7px; padding-bottom: 7px; }
+.ios .bg-list button.text-\[13\.5px\], .ios .bg-list button > .text-\[13\.5px\] { font-size: 16px; }

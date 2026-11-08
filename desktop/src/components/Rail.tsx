@@ -7,17 +7,23 @@ import { openChat } from "../lib/nav";
 import { notice, setUi, useUi } from "../lib/ui";
 import { ALL_CALENDARS } from "../lib/calendar";
 import { checkNow } from "../lib/updater";
-import { BookmarkIcon, BubbleIcon, CalendarIcon, MoreIcon, PersonIcon, PersonPlusIcon } from "./Icons";
+import { isIOS } from "../lib/platform";
+import { BookmarkIcon, BubbleIcon, CalendarIcon, HomeIcon, MoreIcon, PersonIcon, PersonPlusIcon } from "./Icons";
 import { itemClass, popupClass, Separator } from "./kit";
 
 function RailButton({
   title,
+  label,
   active,
   onClick,
   children,
   disabled,
+  className = "",
 }: {
   title: string;
+  /** Shown under the icon in the iPhone tab bar. */
+  label?: string;
+  className?: string;
   active?: boolean;
   onClick?: () => void;
   children: React.ReactNode;
@@ -28,9 +34,10 @@ function RailButton({
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className={`no-drag relative grid h-10 w-11 place-items-center rounded-lg disabled:opacity-40 ${active ? "text-rail-icon-active" : "text-rail-icon hover:text-rail-icon-active"}`}
+      className={`rail-button no-drag relative flex h-10 w-11 flex-col items-center justify-center rounded-lg disabled:opacity-40 ${active ? "text-rail-icon-active" : "text-rail-icon hover:text-rail-icon-active"} ${className}`}
     >
       {children}
+      <span className="rail-label">{label ?? title}</span>
     </button>
   );
 }
@@ -63,13 +70,18 @@ export function Rail() {
     });
   return (
     <div className="drag flex h-full w-[62px] flex-col items-center gap-3 bg-rail pt-[44px] pb-3" data-tauri-drag-region data-rail>
-      <RailButton title="เพื่อน" active={page === "friends"} onClick={() => setUi({ railPage: "friends" })}>
-        <PersonIcon size={23} />
+      <RailButton
+        title="เพื่อน"
+        label={isIOS ? "หน้าหลัก" : undefined}
+        active={page === "friends"}
+        onClick={() => setUi({ railPage: "friends" })}
+      >
+        {isIOS ? <HomeIcon size={25} /> : <PersonIcon size={23} />}
       </RailButton>
       <RailButton title="แชท" active={page === "chats"} onClick={() => setUi({ railPage: "chats" })}>
         <BubbleIcon size={23} />
         {unread > 0 && (
-          <span className="absolute top-0 left-6 min-w-[18px] rounded-full bg-badge-red px-1 text-[10px] leading-[18px] font-bold text-white">
+          <span className="rail-badge absolute top-0 left-6 min-w-[18px] rounded-full bg-badge-red px-1 text-[10px] leading-[18px] font-bold text-white">
             {unread > 999 ? "999+" : unread}
           </span>
         )}
@@ -85,15 +97,19 @@ export function Rail() {
       >
         <CalendarIcon size={21} />
       </RailButton>
-      <RailButton title="Keep Memo" disabled={!me} onClick={() => me && (setUi({ railPage: "chats" }), openChat(me))}>
+      <RailButton title="Keep Memo" className="rail-keep" disabled={!me} onClick={() => me && (setUi({ railPage: "chats" }), openChat(me))}>
         <BookmarkIcon size={21} />
       </RailButton>
       <Menu.Root onOpenChange={setMenuOpen}>
-        <Menu.Trigger aria-label="เมนู" className="no-drag grid h-10 w-11 place-items-center rounded-lg text-rail-icon hover:text-rail-icon-active">
+        <Menu.Trigger
+          aria-label="เมนู"
+          className="rail-button no-drag flex h-10 w-11 flex-col items-center justify-center rounded-lg text-rail-icon hover:text-rail-icon-active"
+        >
           <MoreIcon size={20} />
+          <span className="rail-label">อื่นๆ</span>
         </Menu.Trigger>
         <Menu.Portal>
-          <Menu.Positioner className="z-50" side="right" align="end" sideOffset={6}>
+          <Menu.Positioner className="z-50" side={isIOS ? "top" : "right"} align="end" sideOffset={6}>
             <Menu.Popup className={`${popupClass} w-60`}>
               <div className="px-4 py-1 text-[12px] text-secondary">
                 {session?.profile ? `${session.profile.displayName} · ${session.profile.device}` : ""}
@@ -107,7 +123,7 @@ export function Rail() {
                 <span className="w-4 text-center">{dev ? "✓" : ""}</span>
                 เครื่องมือนักพัฒนา
               </Menu.CheckboxItem>
-              {dev && (
+              {dev && !isIOS && (
                 <Menu.Item className={itemClass} onClick={() => api.openLiffDevtools().catch((e) => notice(errorText(e)))}>
                   LIFF DevTools
                   <span className="ml-auto text-secondary">⌥⌘L</span>
@@ -123,16 +139,20 @@ export function Rail() {
                   ส่งสถิติการใช้งาน
                 </Menu.CheckboxItem>
               )}
-              <Menu.Item className={itemClass} onClick={() => setUi({ sheet: { kind: "mcp" } })}>
-                MCP (ให้ AI ใช้ LAAB)…
-              </Menu.Item>
+              {!isIOS && (
+                <Menu.Item className={itemClass} onClick={() => setUi({ sheet: { kind: "mcp" } })}>
+                  MCP (ให้ AI ใช้ LAAB)…
+                </Menu.Item>
+              )}
               <Menu.Item className={itemClass} onClick={clearCache}>
                 ล้าง cache
                 {cacheBytes != null && <span className="ml-auto text-secondary">{megabytes(cacheBytes)}</span>}
               </Menu.Item>
-              <Menu.Item className={itemClass} onClick={() => checkNow(notice)}>
-                ตรวจหาอัปเดต
-              </Menu.Item>
+              {!isIOS && (
+                <Menu.Item className={itemClass} onClick={() => checkNow(notice)}>
+                  ตรวจหาอัปเดต
+                </Menu.Item>
+              )}
               {analytics && analytics !== "unavailable" && (
                 <Menu.Item className={itemClass} onClick={() => setUi({ sheet: { kind: "report", messageId: null } })}>
                   รายงานปัญหา…
@@ -144,9 +164,11 @@ export function Rail() {
                   ออกจากระบบ
                 </Menu.Item>
               )}
-              <Menu.Item className={itemClass} onClick={() => api.quit()}>
-                ออก
-              </Menu.Item>
+              {!isIOS && (
+                <Menu.Item className={itemClass} onClick={() => api.quit()}>
+                  ออก
+                </Menu.Item>
+              )}
             </Menu.Popup>
           </Menu.Positioner>
         </Menu.Portal>

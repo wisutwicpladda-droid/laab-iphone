@@ -8,6 +8,12 @@ import { setUi } from "../lib/ui";
 import { Avatar } from "./Avatar";
 import { BookmarkIcon, ChevronIcon, PersonPlusIcon, SearchIcon } from "./Icons";
 import { Spinner } from "./kit";
+import { isIOS } from "../lib/platform";
+
+/** LINE for iPhone: each tab opens with a large title. */
+const IosTitle = ({ children }: { children: string }) => (
+  <h1 className="flex h-[52px] shrink-0 items-center px-4 text-[22px] font-bold text-primary">{children}</h1>
+);
 
 const open = (id: string) => {
   setUi({ railPage: "chats" });
@@ -76,13 +82,14 @@ export function FriendsPage() {
   }, [friendList, list, q, me?.mid]);
   return (
     <div className="flex h-full flex-col bg-list">
-      <div className="drag px-4 pt-[34px] pb-2" data-tauri-drag-region>
-        <label className="no-drag flex h-8 items-center gap-2 rounded-md bg-field px-2.5 text-secondary">
+      {isIOS && <IosTitle>หน้าหลัก</IosTitle>}
+      <div className={isIOS ? "px-4 pt-2 pb-2" : "drag px-4 pt-[34px] pb-2"} data-tauri-drag-region={isIOS ? undefined : true}>
+        <label className="list-search no-drag flex h-8 items-center gap-2 rounded-md bg-field px-2.5 text-secondary">
           <SearchIcon size={14} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ค้นหาด้วยชื่อ"
+            placeholder={isIOS ? "ค้นหา" : "ค้นหาด้วยชื่อ"}
             className="selectable min-w-0 flex-1 bg-transparent text-[13px] text-primary outline-none placeholder:text-secondary"
           />
         </label>
@@ -125,7 +132,8 @@ export function FriendsPage() {
  *  groups by invite link and create groups (OpenChat is not supported). */
 export function AddFriendPage() {
   return (
-    <div className="flex h-full flex-col bg-list pt-[38px]">
+    <div className={isIOS ? "flex h-full flex-col bg-list" : "flex h-full flex-col bg-list pt-[38px]"}>
+      {isIOS && <IosTitle>เพิ่มเพื่อน</IosTitle>}
       <button
         onClick={() => setUi({ sheet: { kind: "add-friend" } })}
         className="flex h-[50px] items-center gap-3 px-4 text-left text-[13.5px] hover:bg-row-hover"

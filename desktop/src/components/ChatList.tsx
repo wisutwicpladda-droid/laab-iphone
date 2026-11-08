@@ -6,6 +6,7 @@ import { clickEndsDrag, isRecent, markRecent, moving, pressChat, useChatDrag } f
 import { filterChats, folderName, folderOf, groupRows, isKeepMemo, type ListRow, listPreview, looksUnread, requestBox } from "../lib/chatList";
 import { openChat } from "../lib/nav";
 import { listLabel } from "../lib/time";
+import { isIOS } from "../lib/platform";
 import type { Chat, ChatList, Workspace } from "../lib/types";
 import { type ChatFilter, notice, setUi, ui, useUi } from "../lib/ui";
 import { installAndRestart, useReadyVersion } from "../lib/updater";
@@ -88,13 +89,13 @@ export function ChatListColumn({ selected }: { selected: string | null }) {
 
   return (
     <div className="flex h-full flex-col bg-list">
-      <Tabs />
+      {isIOS ? <IosListHeader /> : <Tabs />}
       <div className="flex items-center gap-2 px-4 pt-[8px] pb-2">
-        <label className="flex h-[35px] flex-1 items-center gap-2 rounded-[6px] bg-field px-2.5 text-secondary">
+        <label className="list-search flex h-[35px] flex-1 items-center gap-2 rounded-[6px] bg-field px-2.5 text-secondary">
           <SearchIcon size={14} />
           <input
             className="selectable min-w-0 flex-1 bg-transparent text-[13px] text-primary outline-none placeholder:text-secondary"
-            placeholder="ค้นหาข้อความและห้องแชท"
+            placeholder={isIOS ? "ค้นหา" : "ค้นหาข้อความและห้องแชท"}
             value={query}
             onChange={(e) => setUi({ listQuery: e.target.value })}
             onKeyDown={(e) => {
@@ -113,33 +114,9 @@ export function ChatListColumn({ selected }: { selected: string | null }) {
             </button>
           )}
         </label>
-        {!query && (
-          <Menu.Root>
-            <Menu.Trigger className="grid h-8 w-8 place-items-center rounded-md text-secondary hover:bg-row-hover" title="เรียงลำดับ">
-              <SortIcon size={16} />
-            </Menu.Trigger>
-            <Menu.Portal>
-              <Menu.Positioner className="z-50" sideOffset={4} align="end">
-                <Menu.Popup className={popupClass}>
-                  <Menu.RadioGroup value={sort} onValueChange={(v) => setUi({ sort: v as "recent" | "unread" })}>
-                    {(
-                      [
-                        ["recent", "เรียงตามเวลาที่ได้รับ"],
-                        ["unread", "เรียงตามข้อความที่ยังไม่อ่าน"],
-                      ] as const
-                    ).map(([v, label]) => (
-                      <Menu.RadioItem key={v} value={v} className={itemClass}>
-                        <span className="w-4 text-center">{sort === v ? "✓" : ""}</span>
-                        {label}
-                      </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
-                </Menu.Popup>
-              </Menu.Positioner>
-            </Menu.Portal>
-          </Menu.Root>
-        )}
+        {!query && !isIOS && <SortMenu />}
       </div>
+      {isIOS && <Tabs />}
       {list && !query.trim() && <RequestBoxEntry list={list} filter={filter} />}
       <div className="relative min-h-0 flex-1">
         <div
@@ -196,7 +173,7 @@ export function ChatListColumn({ selected }: { selected: string | null }) {
                         pinned={pinned.has(row.chat.id)}
                         folder={row.folder}
                         scroller={scroller}
-                        draggable={grouped}
+                        draggable={grouped && !isIOS}
                       />
                     )}
                   </div>
@@ -207,7 +184,7 @@ export function ChatListColumn({ selected }: { selected: string | null }) {
         </div>
         {/* Pinned to the list's bottom-right corner, however short the list. */}
         <button
-          className="absolute right-4 bottom-4 grid h-13 w-13 place-items-center rounded-full bg-line-green text-white shadow-[0_3px_12px_rgba(0,0,0,0.25)] transition-transform duration-150 ease-out active:scale-[0.96]"
+          className="desktop-fab absolute right-4 bottom-4 grid h-13 w-13 place-items-center rounded-full bg-line-green text-white shadow-[0_3px_12px_rgba(0,0,0,0.25)] transition-transform duration-150 ease-out active:scale-[0.96]"
           title="แชทใหม่"
           onClick={() => setUi({ searchOpen: true, searchInitial: "" })}
         >
@@ -217,6 +194,55 @@ export function ChatListColumn({ selected }: { selected: string | null }) {
       <UpdateBar />
       <StatusBar />
       <DragGhost list={list} />
+    </div>
+  );
+}
+
+/** How the chat list is ordered. */
+function SortMenu({ size = 16, className = "text-secondary" }: { size?: number; className?: string }) {
+  const sort = useUi((s) => s.sort);
+  return (
+          <Menu.Root>
+            <Menu.Trigger className={`grid h-8 w-8 place-items-center rounded-md hover:bg-row-hover ${className}`} title="เรียงลำดับ">
+              <SortIcon size={size} />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner className="z-50" sideOffset={4} align="end">
+                <Menu.Popup className={popupClass}>
+                  <Menu.RadioGroup value={sort} onValueChange={(v) => setUi({ sort: v as "recent" | "unread" })}>
+                    {(
+                      [
+                        ["recent", "เรียงตามเวลาที่ได้รับ"],
+                        ["unread", "เรียงตามข้อความที่ยังไม่อ่าน"],
+                      ] as const
+                    ).map(([v, label]) => (
+                      <Menu.RadioItem key={v} value={v} className={itemClass}>
+                        <span className="w-4 text-center">{sort === v ? "✓" : ""}</span>
+                        {label}
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
+  );
+}
+
+/** LINE for iPhone: a large "แชท" title with the list's actions on the right. */
+function IosListHeader() {
+  return (
+    <div className="flex h-[52px] shrink-0 items-center gap-1 pr-2 pl-4">
+      <h1 className="flex-1 text-[22px] font-bold text-primary">แชท</h1>
+      <SortMenu size={21} className="h-10! w-10! text-primary" />
+      <button
+        title="แชทใหม่"
+        aria-label="แชทใหม่"
+        onClick={() => setUi({ searchOpen: true, searchInitial: "" })}
+        className="grid h-10 w-10 place-items-center text-primary"
+      >
+        <PlusBubbleIcon size={24} />
+      </button>
     </div>
   );
 }
@@ -283,6 +309,23 @@ function Tabs() {
     if (!list || id === "all") return false;
     return filterChats(list, id, "recent", "").some(looksUnread);
   };
+  if (isIOS)
+    return (
+      <div className="flex shrink-0 gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setUi({ filter: t.id })}
+            className={`relative h-8 shrink-0 rounded-full px-3.5 text-[14px] ${
+              filter === t.id ? "bg-primary font-semibold text-list" : "bg-field text-primary"
+            }`}
+          >
+            {t.label}
+            {filter !== t.id && unreadIn(t.id) && <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-line-green" />}
+          </button>
+        ))}
+      </div>
+    );
   return (
     <Ctx
       className="block"
@@ -408,10 +451,10 @@ function FolderRow({ row, list, selected }: { row: Extract<ListRow, { kind: "fol
               size={9}
               className={`shrink-0 text-secondary transition-transform duration-150 ease-out motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
             />
-            <span className="ml-auto shrink-0 text-[11px] text-secondary">{listLabel(latest)}</span>
+            <span className="chat-row-time ml-auto shrink-0 text-[11px] text-secondary">{listLabel(latest)}</span>
           </div>
           <div className="mt-0.5 flex items-start gap-2">
-            <span className="line-clamp-2 flex-1 text-[12px] leading-[1.35] text-secondary">
+            <span className="chat-row-preview line-clamp-2 flex-1 text-[12px] leading-[1.35] text-secondary">
               {folder.name ? chats.map((c) => c.name).join(", ") : `${chats.length} แชท`}
             </span>
             {unread > 0 ? <Badge count={unread} /> : <Badge count={mutedUnread} className="bg-secondary!" />}
@@ -541,7 +584,7 @@ export function ChatRow({
         onPointerDown={draggable ? (e) => pressChat(e, chat, folder, scroller?.current ?? null) : undefined}
         onClick={() => !clickEndsDrag() && openChat(chat.id)}
         className={`flex h-[72px] cursor-default items-center gap-3 px-4 transition-opacity duration-150 ease-out active:bg-row-selected ${folder ? "pl-7" : ""} ${dragged ? "opacity-40" : ""} ${
-          merge || intoFolder ? "bg-line-green/12" : selected ? "bg-row-selected" : hover ? "bg-row-hover" : folder ? "bg-row-hover/60" : ""
+          merge || intoFolder ? "bg-line-green/12" : selected && !isIOS ? "bg-row-selected" : hover && !isIOS ? "bg-row-hover" : folder ? "bg-row-hover/60" : ""
         }`}
       >
         {/* The chat it would share a folder with grows a little, as in Discord. */}
@@ -568,7 +611,7 @@ export function ChatRow({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="truncate text-[13.5px] text-primary">{keep ? "Keep Memo" : <Highlight text={chat.name} query={query} />}</span>
+            <span className="chat-row-name truncate text-[13.5px] text-primary">{keep ? "Keep Memo" : <Highlight text={chat.name} query={query} />}</span>
             {chat.kind === "group" && chat.memberCount ? (
               <span className="shrink-0 text-[13.5px] text-primary">({chat.memberCount})</span>
             ) : null}

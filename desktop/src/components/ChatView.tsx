@@ -17,7 +17,7 @@ import { HeaderMenu } from "./ChatActions";
 import { Composer, type ComposerHandle } from "./Composer";
 import { InvitationBar, MessageRequestBar } from "./GroupSheets";
 import { RichMenu } from "./RichMenu";
-import { BellSlashIcon, ChevronIcon, CloseIcon, ExternalIcon, MoreVIcon, NoteIcon, SearchIcon, SpeakerIcon } from "./Icons";
+import { BellSlashIcon, ChevronIcon, CloseIcon, ExternalIcon, MenuLinesIcon, MoreVIcon, NoteIcon, SearchIcon, SpeakerIcon } from "./Icons";
 import { popupClass, Spinner } from "./kit";
 import type { RowContext } from "./MessageRow";
 import { StickerPanel } from "./StickerPanel";
@@ -230,12 +230,56 @@ export function ChatView({ chatId, main }: { chatId: string; main: boolean }) {
   }, [main, chat]);
 
   const title = chat?.name ?? chatId;
+  // LINE for iPhone counts the other chats' unread messages beside "‹".
+  const otherUnread = (list?.chats ?? []).reduce((n, c) => n + (c.id === chatId ? 0 : Math.max(0, c.unread)), 0);
   return (
     <div className="relative flex h-full flex-col bg-chat">
       {/* LINE for Mac: the header sits under a title-bar strip, level with
           the chat list's search box. */}
       <div className="desktop-title-space drag h-[56px] shrink-0" data-tauri-drag-region />
-      <header className="drag flex h-[56px] shrink-0 items-center gap-1.5 px-4" data-tauri-drag-region>
+      {isIOS && (
+        <header className="grid h-[50px] shrink-0 grid-cols-[minmax(84px,auto)_1fr_minmax(84px,auto)] items-center border-b border-separator bg-chat px-1">
+          <button onClick={closeChat} aria-label="แชททั้งหมด" className="flex h-11 items-center gap-0.5 pr-2 pl-1 text-primary">
+            <ChevronIcon dir="left" size={22} />
+            {otherUnread > 0 && <span className="text-[16px]">{otherUnread > 999 ? "999+" : otherUnread}</span>}
+          </button>
+          <h2 className="flex min-w-0 items-center justify-center gap-1 text-[17px] font-semibold">
+            <span className="truncate">{isKeepMemo({ id: chatId }, me) ? "Keep Memo" : title}</span>
+            {group && chat?.memberCount ? <span className="shrink-0">({chat.memberCount})</span> : null}
+            {chat?.muted && <BellSlashIcon size={13} className="shrink-0 text-secondary" />}
+          </h2>
+          <div className="flex items-center justify-end">
+            <button title="ค้นหาในแชท" aria-label="ค้นหาในแชท" onClick={openSearch} className="grid h-11 w-10 place-items-center text-primary">
+              <SearchIcon size={21} />
+            </button>
+            {group && (
+              <button
+                title="โน้ต"
+                aria-label="โน้ต"
+                onClick={() => api.openAuxWindow("albums", chatId, title, "notes").catch((e) => notice(errorText(e)))}
+                className="grid h-11 w-10 place-items-center text-primary"
+              >
+                <NoteIcon size={21} />
+              </button>
+            )}
+            {chat && (
+              <Menu.Root>
+                <Menu.Trigger aria-label="เมนูแชท" className="grid h-11 w-10 place-items-center text-primary">
+                  <MenuLinesIcon size={23} />
+                </Menu.Trigger>
+                <Menu.Portal>
+                  <Menu.Positioner className="z-50" align="end" sideOffset={4}>
+                    <Menu.Popup className={popupClass}>
+                      <HeaderMenu chat={chat} secure={secure} />
+                    </Menu.Popup>
+                  </Menu.Positioner>
+                </Menu.Portal>
+              </Menu.Root>
+            )}
+          </div>
+        </header>
+      )}
+      <header className="desktop-chat-header drag flex h-[56px] shrink-0 items-center gap-1.5 px-4" data-tauri-drag-region>
         <h2 className="truncate text-[15px] font-semibold">{isKeepMemo({ id: chatId }, me) ? "Keep Memo" : title}</h2>
         {group && chat?.memberCount ? <span className="text-[15px] font-semibold">({chat.memberCount})</span> : null}
         {chat && (

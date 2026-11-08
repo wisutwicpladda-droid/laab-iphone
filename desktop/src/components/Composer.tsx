@@ -19,7 +19,7 @@ import {
 import type { ChatMember, DraftMention } from "../lib/types";
 import { pushDismiss, setUi, useUi } from "../lib/ui";
 import { Avatar } from "./Avatar";
-import { CloseIcon, PaperclipIcon, SmileIcon, WarningIcon } from "./Icons";
+import { CloseIcon, PaperclipIcon, PlusIcon, SendIcon, SmileIcon, WarningIcon } from "./Icons";
 
 const LINE_HEIGHT = 20;
 const MAX_LINES = 6;
@@ -383,7 +383,7 @@ export const Composer = forwardRef<
   }, [text, lines]);
 
   return (
-    <div className="relative border-t border-separator bg-chat px-[14px] pt-3 pb-1.5" onClick={() => area.current?.focus()}>
+    <div className="composer-root relative border-t border-separator bg-chat px-[14px] pt-3 pb-1.5" onClick={() => area.current?.focus()}>
       {pickerOpen && (
         // Opens while typing "@": no animation.
         <div className="absolute right-4 bottom-full left-4 mb-1 overflow-hidden rounded-xl bg-popover shadow-[0_8px_28px_rgba(0,0,0,0.22)] ring-1 ring-black/10">
@@ -476,7 +476,21 @@ export const Composer = forwardRef<
           </button>
         </div>
       )}
-      <div className="relative" style={{ height }}>
+      <div className={isIOS ? "flex items-end gap-1" : ""}>
+        {isIOS && (
+          <button
+            type="button"
+            title="แนบไฟล์"
+            aria-label="แนบไฟล์"
+            disabled={disabled}
+            onClick={(e) => (e.stopPropagation(), void attach())}
+            className="-ml-1.5 grid h-[38px] w-9 shrink-0 place-items-center text-primary disabled:opacity-40"
+          >
+            <PlusIcon size={24} />
+          </button>
+        )}
+        <div className={isIOS ? "composer-pill flex min-w-0 flex-1 items-end gap-1 rounded-[19px] bg-field py-[9px] pr-2 pl-3.5" : ""}>
+      <div className="relative min-w-0 flex-1" style={{ height }}>
         <div
           ref={mirror}
           aria-hidden
@@ -490,7 +504,7 @@ export const Composer = forwardRef<
           rows={1}
           disabled={disabled}
           value={text}
-          placeholder="พิมพ์ข้อความ"
+          placeholder={isIOS ? "Aa" : "พิมพ์ข้อความ"}
           spellCheck={false}
           onChange={(e) => update(e.target.value, e.target.selectionStart)}
           onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
@@ -503,8 +517,34 @@ export const Composer = forwardRef<
           style={{ lineHeight: `${LINE_HEIGHT}px` }}
         />
       </div>
+          {isIOS && (
+            <button
+              type="button"
+              title="สติกเกอร์"
+              aria-label="สติกเกอร์"
+              onClick={(e) => (e.stopPropagation(), onToggleStickers())}
+              className={`grid h-5 w-7 shrink-0 place-items-center ${stickerOpen ? "text-line-green" : "text-secondary"}`}
+            >
+              <SmileIcon size={22} strokeWidth={1.6} />
+            </button>
+          )}
+        </div>
+        {isIOS && (
+          <button
+            type="button"
+            title="ส่ง"
+            aria-label="ส่ง"
+            disabled={disabled || sending || (!text.trim() && !pendingImage)}
+            onClick={(e) => (e.stopPropagation(), void send(false))}
+            className="-mr-1.5 grid h-[38px] w-10 shrink-0 place-items-center text-line-green disabled:text-secondary/40"
+          >
+            <SendIcon size={24} />
+          </button>
+        )}
+      </div>
       {/* LINE for Mac: 📎 on the left, 🙂 (stickers) on the right, no send
           button; Return sends. */}
+      {!isIOS && (
       <div className="composer-tools mt-7 flex items-center gap-1 text-secondary dark:text-[#c0c0c0]">
         <button
           title="แนบไฟล์"
@@ -534,8 +574,8 @@ export const Composer = forwardRef<
         >
           <SmileIcon size={23} strokeWidth={1.5} />
         </button>
-        {isIOS && <button type="button" className="mobile-send" disabled={disabled || sending || (!text.trim() && !pendingImage)} onClick={() => void send(false)}>ส่ง</button>}
       </div>
+      )}
     </div>
   );
 });

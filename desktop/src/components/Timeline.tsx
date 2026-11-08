@@ -203,16 +203,16 @@ export function Timeline({
   }, [target, focusId, rows.length]);
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div className="chat-timeline relative flex min-h-0 flex-1 flex-col">
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-4" onScroll={onScroll}>
         <div ref={inner}>
           {rows.length === 0 && !failed && (
-            <div className="grid place-items-center pt-24 text-[13px] text-secondary">
+            <div className="timeline-note grid place-items-center pt-24 text-[13px] text-secondary">
               {loading ? <Spinner size={18} /> : "ยังไม่มีข้อความในแชทนี้"}
             </div>
           )}
           {older.state === "error" && (
-            <div className="flex justify-center pt-4 text-[12px] text-secondary">
+            <div className="timeline-note flex justify-center pt-4 text-[12px] text-secondary">
               <button onClick={older.load} className="hover:text-primary">
                 โหลดข้อความก่อนหน้าไม่สำเร็จ · ลองอีกครั้ง
               </button>

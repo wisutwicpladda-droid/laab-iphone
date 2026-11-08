@@ -1,5 +1,4 @@
 import { isIOS } from "../lib/platform";
-import { closeChat } from "../lib/nav";
 import { ForwardSheet } from "./ForwardSheet";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { listen } from "@tauri-apps/api/event";
@@ -157,7 +156,6 @@ export function MainLayout({ chatId }: { chatId: string | null }) {
       >
         {chatId ? (
           <>
-            {isIOS && <button className="mobile-back" onClick={closeChat}>‹ แชททั้งหมด</button>}
             <ChatView key={chatId} chatId={chatId} main />
           </>
         ) : (

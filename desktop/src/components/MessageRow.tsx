@@ -62,7 +62,7 @@ function Bubble({ mine, tail, children, className = "" }: { mine: boolean; tail:
   const color = mine ? "var(--color-outgoing)" : "var(--color-incoming)";
   return (
     <div
-      className={`selectable relative max-w-[420px] rounded-[16.5px] px-[13px] py-[7px] text-[13.5px] leading-[1.4] break-words whitespace-pre-wrap ${className}`}
+      className={`msg-bubble selectable relative max-w-[420px] rounded-[16.5px] px-[13px] py-[7px] text-[13.5px] leading-[1.4] break-words whitespace-pre-wrap ${className}`}
       style={{ background: color, color: mine ? "var(--color-outgoing-text)" : "var(--color-primary)" }}
     >
       {tail && <Tail mine={mine} color={color} />}
@@ -661,7 +661,7 @@ export const MessageRow = memo(function MessageRow({
   // LINE puts the time (and read mark) beside every message, even several
   // in the same minute; only the avatar and name are shared by a run.
   const meta = (
-    <div className={`relative flex shrink-0 flex-col justify-end gap-px self-end pb-0.5 ${m.mine ? "items-end" : "items-start"}`}>
+    <div className={`msg-meta relative flex shrink-0 flex-col justify-end gap-px self-end pb-0.5 ${m.mine ? "items-end" : "items-start"}`}>
       <div className={`flex flex-col gap-px ${m.mine ? "items-end" : "items-start"}`}>
         <ReadMark direct={!ctx.group} readers={readers} onOpen={ctx.loadMembers} />
         <span className="text-[11px] text-secondary">{clock((photos?.[photos.length - 1] ?? m).createdTime)}</span>
@@ -744,7 +744,7 @@ export const MessageRow = memo(function MessageRow({
           <div className={`flex min-w-0 flex-col ${tail ? "pl-2" : ""}`}>
             {runStart && ctx.group && m.senderId && (
               <button
-                className="mb-1 self-start text-[12px] text-secondary hover:text-primary hover:underline"
+                className="msg-sender mb-1 self-start text-[12px] text-secondary hover:text-primary hover:underline"
                 onClick={() =>
                   setUi({ mentionRequest: { chatId: ctx.chatId, mid: m.senderId!, name: ctx.name(m.senderId!) } })
                 }

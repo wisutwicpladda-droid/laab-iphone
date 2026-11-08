@@ -334,3 +334,14 @@ export const RepeatIcon = (p: P) => (
     <path d="M20 13v1.5a3.5 3.5 0 0 1-3.5 3.5H5m0 0 3 3m-3-3 3-3" />
   </svg>
 );
+
+export const HomeIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M11.3 3.3a1 1 0 0 1 1.4 0l8.1 7.5a1 1 0 0 1-.7 1.7H19V20a1 1 0 0 1-1 1h-3.6v-5.6H9.6V21H6a1 1 0 0 1-1-1v-7.5H3.9a1 1 0 0 1-.7-1.7l8.1-7.5Z" />
+  </svg>
+);
+export const MenuLinesIcon = (p: P) => (
+  <svg {...base(p)} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+    <path d="M4 6.5h16M4 12h16M4 17.5h16" />
+  </svg>
+);
