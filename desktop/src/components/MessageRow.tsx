@@ -483,6 +483,8 @@ function Content({
 function copyable(m: Message) {
   if (["IMAGE", "VIDEO", "AUDIO", "FILE", "STICKER"].includes(m.contentType)) return true;
   if (m.contentType === "CONTACT") return !!m.metadata.mid;
+  // Sent again through LINE's share API, as LIFF apps share Flex messages.
+  if (m.contentType === "FLEX") return !!m.metadata.FLEX_JSON;
   return m.contentType === "NONE" && !!m.text.trim();
 }
 

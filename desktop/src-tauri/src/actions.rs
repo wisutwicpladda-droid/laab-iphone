@@ -279,12 +279,41 @@ async fn send_copy(state: &Arc<AppState>, chat_id: &str, message_id: &str, to: &
             let name = m.metadata.get("displayName").cloned().unwrap_or_default();
             chat.send_contact(mid, &name).await?;
         }
+        "FLEX" => {
+            // A user can't send a Flex message through Talk; LINE's share API
+            // (the one LIFF apps' shareTargetPicker uses) sends it as the user.
+            let contents = m
+                .metadata
+                .get("FLEX_JSON")
+                .and_then(|raw| flex_contents(raw))
+                .ok_or_else(|| anyhow!("ข้อความนี้ไม่มีเนื้อหา Flex ให้ส่งต่อ"))?;
+            let alt = m
+                .metadata
+                .get("ALT_TEXT")
+                .filter(|v| !v.trim().is_empty())
+                .cloned()
+                .unwrap_or_else(|| "Flex Message".into());
+            l.client
+                .liff()
+                .share_message(to, line_rs::client::liff::flex(alt, contents), false)
+                .await
+                .map_err(|e| anyhow!("LINE ไม่รับ Flex นี้: {e}"))?;
+        }
         _ if !m.text.trim().is_empty() => {
             l.client.send_message(to, MessageInput::text(m.text.clone())).await?;
         }
         _ => bail!("ข้อความนี้ไม่มีเนื้อหาให้ส่งต่อ"),
     }
     Ok(())
+}
+
+/// The Flex container (`bubble` or `carousel`) in a message's
+/// `FLEX_JSON`, which some senders store as a whole `{"type":"flex",
+/// "contents": …}` message instead.
+fn flex_contents(raw: &str) -> Option<serde_json::Value> {
+    let v: serde_json::Value = serde_json::from_str(raw).ok()?;
+    let v = if v["type"] == "flex" { v.get("contents")?.clone() } else { v };
+    matches!(v["type"].as_str(), Some("bubble" | "carousel")).then_some(v)
 }
 
 /// A sticker message to send again: package, sticker, version and the
@@ -1826,6 +1855,16 @@ pub async fn delete_album(state: &Arc<AppState>, chat_id: &str, album_id: &str) 
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn flex_contents_takes_the_container() {
+        let bubble = json!({"type": "bubble", "body": {"type": "box", "layout": "vertical", "contents": []}});
+        assert_eq!(flex_contents(&bubble.to_string()), Some(bubble.clone()));
+        let wrapped = json!({"type": "flex", "altText": "x", "contents": bubble});
+        assert_eq!(flex_contents(&wrapped.to_string()), Some(bubble));
+        assert_eq!(flex_contents("not json"), None);
+        assert_eq!(flex_contents(&json!({"type": "box"}).to_string()), None);
+    }
 
     fn stored(meta: Value) -> Value {
         let mut raw = tv!({"id": "777", "to": "u-friend"});
